@@ -1,0 +1,6 @@
+{
+  "name": "Gestão de Cursos NR",
+  "description": "Plataforma integrada de acompanhamento e controle operacional de cursos de Normas Regulamentadoras (NR) do SESI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
