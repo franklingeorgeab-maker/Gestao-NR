@@ -299,9 +299,7 @@ export default function App() {
                 Gestão Integrada NR
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border border-slate-700 px-2 py-0.5 rounded-full bg-slate-800 hidden sm:inline-block">SGN PRO</span>
               </h1>
-              <p className="text-[11px] sm:text-xs text-slate-400 hidden sm:block">
-                Planejamento, Disponibilidade e Fluxo Operacional • Hub Santa Catarina
-              </p>
+
             </div>
           </div>
         </div>
