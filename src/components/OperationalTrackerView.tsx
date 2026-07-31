@@ -63,6 +63,12 @@ export default function OperationalTrackerView({
   const [formRevenuePredicted, setFormRevenuePredicted] = useState(4500);
   const [formNotes, setFormNotes] = useState("");
 
+  const canViewRevenue = 
+    currentProfile === "Supervisão" || 
+    currentProfile === "PCP" || 
+    currentProfile === "Comercial" || 
+    currentProfile === "Faturamento";
+
   const activeClass = classes.find(c => c.id === selectedClassId) || classes[0];
 
   // States for Editing Agenda (Supervisor/Coordination)
@@ -658,7 +664,7 @@ export default function OperationalTrackerView({
               )}
 
               {/* Miscellaneous class specs */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+              <div className={`bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 ${canViewRevenue ? "md:grid-cols-4" : "md:grid-cols-3"} gap-4 text-xs`}>
                 <div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Período / Dias</p>
                   <p className="font-semibold text-slate-700 mt-0.5">{activeClass.period}</p>
@@ -682,17 +688,19 @@ export default function OperationalTrackerView({
                   </span>
                 </div>
 
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-sans">Receita Estimada</p>
-                  <p className="font-semibold text-slate-700 mt-0.5">
-                    R$ {activeClass.revenuePredicted.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </p>
-                  {activeClass.revenueRealized > 0 && (
-                    <p className="text-[10px] text-emerald-600 font-bold mt-0.5">
-                      Faturado: R$ {activeClass.revenueRealized.toLocaleString("pt-BR")}
+                {canViewRevenue && (
+                  <div>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-sans">Receita Estimada</p>
+                    <p className="font-semibold text-slate-700 mt-0.5">
+                      R$ {activeClass.revenuePredicted.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </p>
-                  )}
-                </div>
+                    {activeClass.revenueRealized > 0 && (
+                      <p className="text-[10px] text-emerald-600 font-bold mt-0.5">
+                        Faturado: R$ {activeClass.revenueRealized.toLocaleString("pt-BR")}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
             </div>
@@ -879,15 +887,17 @@ export default function OperationalTrackerView({
                 </div>
 
                 {/* Revenue predicted */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Receita Prevista (R$)</label>
-                  <input
-                    type="number"
-                    value={formRevenuePredicted}
-                    onChange={(e) => setFormRevenuePredicted(Number(e.target.value))}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+                {canViewRevenue && (
+                  <div className="space-y-1 text-xs">
+                    <label className="font-semibold text-slate-600">Receita Prevista (R$)</label>
+                    <input
+                      type="number"
+                      value={formRevenuePredicted}
+                      onChange={(e) => setFormRevenuePredicted(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                )}
 
                 {/* Notes */}
                 <div className="col-span-2 space-y-1 text-xs">
