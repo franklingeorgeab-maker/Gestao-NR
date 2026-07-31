@@ -22,16 +22,56 @@ export interface Course {
 
 export type InstructorLinkType = "Horista" | "Mensalista" | "Terceirizado";
 
-export interface Instructor {
+export type DayOfWeek = "Segunda" | "Terça" | "Quarta" | "Quinta" | "Sexta" | "Sábado" | "Domingo";
+export type DayPeriod = "Manhã" | "Tarde" | "Noite";
+
+export interface AgendaBlock {
+  id: string;
+  instructorId: string;
+  dayOfWeek: string; // e.g. "Sábado" or "Segunda-feira"
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  reason: "Férias" | "Atestado Médico" | "Banco de Horas" | "Compromisso Particular" | "Feriado" | "Treinamento" | "Outro";
+  notes?: string;
+}
+
+export interface UserProfile {
   id: string;
   name: string;
-  linkType: InstructorLinkType;
+  email: string;
+  role: "Adm Geral" | "Admin. Local" | "Comercial" | "Secretaria" | "Faturista" | "Instrutor";
+  functionName: string; // e.g. "Líder do Negócio", "Analista CPR", "Supervisor|PCP"
   regional: Regional;
-  contact: string;
-  competencies: string[]; // List of NR codes e.g. ["NR 10", "SEP", "NR 35"]
-  availability: string; // e.g. "Seg, Qua, Sex" or "Sábados"
-  constraints: string; // e.g. "Apenas noturno" or "Sem restrições"
-  notes?: string;
+}
+
+export interface Instructor {
+  id: string; // ID do instrutor (Obrigatório)
+  name: string; // Nome completo (Obrigatório)
+  email: string; // E-mail (Obrigatório)
+  phone?: string; // Telefone (Opcional)
+  regionalBase: Regional; // Regional-base (Obrigatório)
+  unitBase: string; // Unidade-base (Obrigatório)
+  cityBase: string; // Município-base (Obrigatório)
+  linkType: InstructorLinkType; // Tipo de vínculo (Horista / Mensalista / Terceirizado) (Obrigatório)
+  status: "Ativo" | "Inativo"; // Situação (Obrigatório)
+  allowsTravel: boolean; // Permite deslocamento (Obrigatório)
+  attendedRegionals?: Regional[]; // Regionais atendidas (Opcional)
+  notes: string; // Observações (Obrigatório)
+  
+  // Disponibilidade
+  periods: DayPeriod[]; // Manhã, Tarde, Noite (Obrigatório selecionar ao menos um)
+  availableDays: DayOfWeek[]; // Segunda a Sábado (Obrigatório selecionar)
+  
+  // Competências / Matriz de Cursos (NRs)
+  competencies: string[];
+
+  // Compatibilidade com visualizações antigas / textos formatados
+  regional?: Regional;
+  contact?: string;
+  availability?: string;
+  constraints?: string;
 }
 
 export type StepStatus = "Pendente" | "Em andamento" | "Concluído" | "N/A";

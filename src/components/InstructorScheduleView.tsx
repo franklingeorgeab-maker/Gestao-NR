@@ -22,7 +22,8 @@ import {
   Trash2,
   AlertTriangle
 } from "lucide-react";
-import { Instructor, Course, CourseClass, Regional, InstructorLinkType } from "../types";
+import { Instructor, Course, CourseClass, Regional, InstructorLinkType, AgendaBlock, UserProfile } from "../types";
+import { INITIAL_AGENDA_BLOCKS, INITIAL_USER_PROFILES } from "../data/mockData";
 
 interface InstructorScheduleViewProps {
   instructors: Instructor[];
@@ -41,27 +42,191 @@ export default function InstructorScheduleView({
   onUpdateInstructor,
   onDeleteInstructor
 }: InstructorScheduleViewProps) {
-  // Tabs: "Diretório" or "Simulador"
-  const [activeTab, setActiveTab] = useState<"diretorio" | "simulador">("diretorio");
+  // Tabs: "diretorio" | "bloqueios" | "catalogo" | "perfis" | "simulador"
+  const [activeTab, setActiveTab] = useState<"diretorio" | "bloqueios" | "catalogo" | "perfis" | "simulador">("diretorio");
   
   // Search and Filter states for Directory
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegional, setSelectedRegional] = useState<Regional | "Todas">("Todas");
   const [selectedCompetency, setSelectedCompetency] = useState<string>("Todas");
 
+  // Agenda Blocks state
+  const [agendaBlocks, setAgendaBlocks] = useState<AgendaBlock[]>(INITIAL_AGENDA_BLOCKS);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [blockInstructorId, setBlockInstructorId] = useState("");
+  const [blockDay, setBlockDay] = useState("Sábado");
+  const [blockStart, setBlockStart] = useState("08:00");
+  const [blockEnd, setBlockEnd] = useState("17:00");
+  const [blockStartDate, setBlockStartDate] = useState("2026-01-01");
+  const [blockEndDate, setBlockEndDate] = useState("2026-12-31");
+  const [blockReason, setBlockReason] = useState<AgendaBlock["reason"]>("Férias");
+  const [blockNotes, setBlockNotes] = useState("");
+
   // Instructor Form Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingInstructor, setEditingInstructor] = useState<Instructor | null>(null);
 
-  // Form Fields
-  const [formName, setFormName] = useState("");
-  const [formLinkType, setFormLinkType] = useState<InstructorLinkType>("Mensalista");
-  const [formRegional, setFormRegional] = useState<Regional>("Oeste");
-  const [formContact, setFormContact] = useState("");
+  // Expanded Form Fields (per user table specifications)
+  const [formId, setFormId] = useState(""); // ID do instrutor (Sim)
+  const [formName, setFormName] = useState(""); // Nome completo (Sim)
+  const [formEmail, setFormEmail] = useState(""); // E-mail (Sim)
+  const [formPhone, setFormPhone] = useState(""); // Telefone (Não)
+  const [formRegionalBase, setFormRegionalBase] = useState<Regional>("Centro-Norte"); // Regional-base (Sim)
+  const [formUnitBase, setFormUnitBase] = useState(""); // Unidade-base (Sim)
+  const [formCityBase, setFormCityBase] = useState(""); // Município-base (Sim)
+  const [formLinkType, setFormLinkType] = useState<InstructorLinkType>("Horista"); // Tipo de vínculo (Sim)
+  const [formStatus, setFormStatus] = useState<"Ativo" | "Inativo">("Ativo"); // Situação (Sim)
+  const [formAllowsTravel, setFormAllowsTravel] = useState<boolean>(true); // Permite deslocamento (Sim)
+  const [formAttendedRegionals, setFormAttendedRegionals] = useState<Regional[]>(["Centro-Norte"]); // Regionais atendidas (Não)
+  const [formNotes, setFormNotes] = useState(""); // Observações (Sim)
+  
+  // Periods & Days of week
+  const [formPeriods, setFormPeriods] = useState<("Manhã" | "Tarde" | "Noite")[]>(["Noite"]);
+  const [formAvailableDays, setFormAvailableDays] = useState<("Segunda" | "Terça" | "Quarta" | "Quinta" | "Sexta" | "Sábado" | "Domingo")[]>(["Segunda", "Terça", "Quarta", "Quinta", "Sábado"]);
   const [formCompetencies, setFormCompetencies] = useState<string[]>([]);
-  const [formAvailability, setFormAvailability] = useState("");
-  const [formConstraints, setFormConstraints] = useState("");
-  const [formNotes, setFormNotes] = useState("");
+
+  // Course catalog search
+  const [courseSearch, setCourseSearch] = useState("");
+
+  // Handle Form Open for Create/Edit
+  const handleOpenForm = (inst?: Instructor) => {
+    if (inst) {
+      setEditingInstructor(inst);
+      setFormId(inst.id);
+      setFormName(inst.name);
+      setFormEmail(inst.email || "");
+      setFormPhone(inst.phone || "");
+      setFormRegionalBase(inst.regionalBase || inst.regional || "Centro-Norte");
+      setFormUnitBase(inst.unitBase || "Caçador");
+      setFormCityBase(inst.cityBase || "Caçador");
+      setFormLinkType(inst.linkType);
+      setFormStatus(inst.status || "Ativo");
+      setFormAllowsTravel(inst.allowsTravel !== undefined ? inst.allowsTravel : true);
+      setFormAttendedRegionals(inst.attendedRegionals || [inst.regionalBase || "Centro-Norte"]);
+      setFormNotes(inst.notes || "");
+      setFormPeriods(inst.periods || ["Noite"]);
+      setFormAvailableDays(inst.availableDays || ["Segunda", "Terça", "Quarta", "Quinta", "Sábado"]);
+      setFormCompetencies(inst.competencies || []);
+    } else {
+      setEditingInstructor(null);
+      setFormId(`inst-${Math.floor(100000 + Math.random() * 900000)}`);
+      setFormName("");
+      setFormEmail("");
+      setFormPhone("");
+      setFormRegionalBase("Centro-Norte");
+      setFormUnitBase("Caçador");
+      setFormCityBase("Caçador");
+      setFormLinkType("Horista");
+      setFormStatus("Ativo");
+      setFormAllowsTravel(true);
+      setFormAttendedRegionals(["Centro-Norte"]);
+      setFormNotes("");
+      setFormPeriods(["Manhã", "Tarde"]);
+      setFormAvailableDays(["Segunda", "Terça", "Quarta", "Quinta", "Sexta"]);
+      setFormCompetencies(["NR 10 - Básico", "NR 35"]);
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleSaveForm = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Mandatory validations according to user table
+    if (!formId.trim()) { alert("O campo 'ID do instrutor' é obrigatório."); return; }
+    if (!formName.trim()) { alert("O campo 'Nome completo' é obrigatório."); return; }
+    if (!formEmail.trim()) { alert("O campo 'E-mail' é obrigatório."); return; }
+    if (!formRegionalBase) { alert("O campo 'Regional-base' é obrigatório."); return; }
+    if (!formUnitBase.trim()) { alert("O campo 'Unidade-base' é obrigatório."); return; }
+    if (!formCityBase.trim()) { alert("O campo 'Município-base' é obrigatório."); return; }
+    if (!formLinkType) { alert("O campo 'Tipo de vínculo' é obrigatório."); return; }
+    if (!formStatus) { alert("O campo 'Situação' é obrigatório."); return; }
+    if (!formNotes.trim()) { alert("O campo 'Observações' é obrigatório."); return; }
+    if (formPeriods.length === 0) { alert("Selecione pelo menos um período de disponibilidade (Manhã, Tarde, Noite)."); return; }
+    if (formAvailableDays.length === 0) { alert("Selecione pelo menos um dia da semana disponível."); return; }
+
+    const availabilityText = `${formAvailableDays.join(", ")} (${formPeriods.join(", ")})`;
+    const contactText = `${formPhone ? formPhone + " - " : ""}${formEmail}`;
+
+    const instructorData: Instructor = {
+      id: formId.trim(),
+      name: formName.trim(),
+      email: formEmail.trim(),
+      phone: formPhone.trim() || undefined,
+      regionalBase: formRegionalBase,
+      unitBase: formUnitBase.trim(),
+      cityBase: formCityBase.trim(),
+      linkType: formLinkType,
+      status: formStatus,
+      allowsTravel: formAllowsTravel,
+      attendedRegionals: formAttendedRegionals,
+      notes: formNotes.trim(),
+      periods: formPeriods,
+      availableDays: formAvailableDays,
+      competencies: formCompetencies,
+      regional: formRegionalBase,
+      contact: contactText,
+      availability: availabilityText,
+      constraints: formNotes.trim()
+    };
+
+    if (editingInstructor) {
+      onUpdateInstructor(instructorData);
+    } else {
+      onAddInstructor(instructorData);
+    }
+    setIsModalOpen(false);
+  };
+
+  const togglePeriod = (p: "Manhã" | "Tarde" | "Noite") => {
+    if (formPeriods.includes(p)) {
+      setFormPeriods(formPeriods.filter(item => item !== p));
+    } else {
+      setFormPeriods([...formPeriods, p]);
+    }
+  };
+
+  const toggleDay = (d: "Segunda" | "Terça" | "Quarta" | "Quinta" | "Sexta" | "Sábado" | "Domingo") => {
+    if (formAvailableDays.includes(d)) {
+      setFormAvailableDays(formAvailableDays.filter(item => item !== d));
+    } else {
+      setFormAvailableDays([...formAvailableDays, d]);
+    }
+  };
+
+  const toggleRegionalAttended = (reg: Regional) => {
+    if (formAttendedRegionals.includes(reg)) {
+      setFormAttendedRegionals(formAttendedRegionals.filter(r => r !== reg));
+    } else {
+      setFormAttendedRegionals([...formAttendedRegionals, reg]);
+    }
+  };
+
+  const toggleCompetencyInForm = (comp: string) => {
+    if (formCompetencies.includes(comp)) {
+      setFormCompetencies(formCompetencies.filter(c => c !== comp));
+    } else {
+      setFormCompetencies([...formCompetencies, comp]);
+    }
+  };
+
+  const handleAddBlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!blockInstructorId) { alert("Selecione o instrutor."); return; }
+    const newBlock: AgendaBlock = {
+      id: `blk-${Date.now()}`,
+      instructorId: blockInstructorId,
+      dayOfWeek: blockDay,
+      startTime: blockStart,
+      endTime: blockEnd,
+      startDate: blockStartDate,
+      endDate: blockEndDate,
+      reason: blockReason,
+      notes: blockNotes
+    };
+    setAgendaBlocks([newBlock, ...agendaBlocks]);
+    setIsBlockModalOpen(false);
+    setBlockNotes("");
+  };
 
   // Simulator state variables
   const [simCourseId, setSimCourseId] = useState<string>(courses[0]?.id || "");
@@ -74,67 +239,6 @@ export default function InstructorScheduleView({
   const allCompetencies = Array.from(
     new Set(instructors.flatMap(inst => inst.competencies))
   ).sort();
-
-  // Handle Form Open for Create/Edit
-  const handleOpenForm = (inst?: Instructor) => {
-    if (inst) {
-      setEditingInstructor(inst);
-      setFormName(inst.name);
-      setFormLinkType(inst.linkType);
-      setFormRegional(inst.regional);
-      setFormContact(inst.contact);
-      setFormCompetencies(inst.competencies);
-      setFormAvailability(inst.availability);
-      setFormConstraints(inst.constraints);
-      setFormNotes(inst.notes || "");
-    } else {
-      setEditingInstructor(null);
-      setFormName("");
-      setFormLinkType("Mensalista");
-      setFormRegional("Oeste");
-      setFormContact("");
-      setFormCompetencies([]);
-      setFormAvailability("Segunda a Sexta");
-      setFormConstraints("Sem restrições");
-      setFormNotes("");
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleSaveForm = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formName || !formContact) {
-      alert("Por favor, preencha o Nome e Contato.");
-      return;
-    }
-
-    const instructorData: Instructor = {
-      id: editingInstructor ? editingInstructor.id : `inst-${Date.now()}`,
-      name: formName,
-      linkType: formLinkType,
-      regional: formRegional,
-      contact: formContact,
-      competencies: formCompetencies,
-      availability: formAvailability,
-      constraints: formConstraints,
-      notes: formNotes
-    };
-
-    if (editingInstructor) {
-      onUpdateInstructor(instructorData);
-    } else {
-      onAddInstructor(instructorData);
-    }
-    setIsModalOpen(false);
-  };
-
-  const toggleCompetencyInForm = (comp: string) => {
-    if (formCompetencies.includes(comp)) {
-      setFormCompetencies(formCompetencies.filter(c => c !== comp));
-    } else {
-      setFormCompetencies([...formCompetencies, comp]);
-    }
-  };
 
   // Filtered Instructor list for Directory
   const filteredInstructors = instructors.filter(inst => {
@@ -254,26 +358,56 @@ export default function InstructorScheduleView({
           </p>
         </div>
 
-        <div className="flex gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 self-start md:self-auto">
+        <div className="flex flex-wrap gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 self-start md:self-auto">
           <button
             onClick={() => setActiveTab("diretorio")}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
               activeTab === "diretorio"
                 ? "bg-slate-900 text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
-            📂 Diretório de Instrutores
+            📂 Diretório ({instructors.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("bloqueios")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeTab === "bloqueios"
+                ? "bg-slate-900 text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            ⛔ Bloqueios ({agendaBlocks.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("catalogo")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeTab === "catalogo"
+                ? "bg-slate-900 text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            📚 Cursos SGN ({courses.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("perfis")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              activeTab === "perfis"
+                ? "bg-slate-900 text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            👥 Perfis de Acesso
           </button>
           <button
             onClick={() => setActiveTab("simulador")}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
               activeTab === "simulador"
                 ? "bg-slate-900 text-white shadow-xs"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
-            🧠 Simulador Inteligente
+            🧠 Simulador
           </button>
         </div>
       </div>
@@ -466,179 +600,373 @@ export default function InstructorScheduleView({
         </div>
       )}
 
-      {/* Simulator Tab */}
-      {activeTab === "simulador" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Simulator Controls Card */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 self-start">
-            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-100 pb-3">
-              <SlidersHorizontal className="w-4 h-4 text-blue-600" />
-              Parâmetros da Nova Turma
-            </h3>
+      {/* Bloqueios de Agenda Tab */}
+      {activeTab === "bloqueios" && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-800">Escala & Bloqueio de Agenda dos Instrutores</h3>
+              <p className="text-xs text-slate-500">
+                Cadastre e acompanhe afastamentos por Férias, Atestado Médico, Banco de Horas, Compromisso Particular ou Feriado.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setBlockInstructorId(instructors[0]?.id || "");
+                setIsBlockModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition-all shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Bloqueio de Horário
+            </button>
+          </div>
 
-            <div className="space-y-3.5 text-xs">
-              {/* Course selection */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="p-3.5">Instrutor</th>
+                    <th className="p-3.5">Dia da Semana</th>
+                    <th className="p-3.5">Horário</th>
+                    <th className="p-3.5">Vigência</th>
+                    <th className="p-3.5">Motivo do Bloqueio</th>
+                    <th className="p-3.5">Observações</th>
+                    <th className="p-3.5 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                  {agendaBlocks.map(block => {
+                    const inst = instructors.find(i => i.id === block.instructorId);
+                    return (
+                      <tr key={block.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-3.5 font-bold text-slate-800">
+                          {inst ? inst.name : `ID: ${block.instructorId}`}
+                        </td>
+                        <td className="p-3.5">
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-700 font-bold rounded-md border border-slate-200">
+                            {block.dayOfWeek}
+                          </span>
+                        </td>
+                        <td className="p-3.5 font-mono text-slate-600">
+                          {block.startTime} às {block.endTime}
+                        </td>
+                        <td className="p-3.5 text-slate-500 font-mono text-[11px]">
+                          {block.startDate} a {block.endDate}
+                        </td>
+                        <td className="p-3.5">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            block.reason === "Férias" ? "bg-amber-100 text-amber-800" :
+                            block.reason === "Atestado Médico" ? "bg-rose-100 text-rose-800" :
+                            block.reason === "Banco de Horas" ? "bg-blue-100 text-blue-800" :
+                            block.reason === "Feriado" ? "bg-purple-100 text-purple-800" :
+                            "bg-slate-100 text-slate-700"
+                          }`}>
+                            {block.reason}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-slate-500 max-w-xs truncate">
+                          {block.notes || "—"}
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <button
+                            onClick={() => setAgendaBlocks(agendaBlocks.filter(b => b.id !== block.id))}
+                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded"
+                            title="Remover Bloqueio"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {agendaBlocks.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-slate-400 italic">
+                        Nenhum bloqueio cadastrado na agenda.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Catálogo de Cursos SGN Tab */}
+      {activeTab === "catalogo" && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-800">Catálogo de Cursos de SST & NRs (Matriz SGN)</h3>
+              <p className="text-xs text-slate-500">
+                Parametrização oficial dos cursos, modalidades aceitas, carga horária e pré-requisitos cadastrados no SGN.
+              </p>
+            </div>
+            <div className="relative w-full md:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="Buscar por código SGN, título, NR..."
+                value={courseSearch}
+                onChange={(e) => setCourseSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {courses
+              .filter(c => 
+                c.name.toLowerCase().includes(courseSearch.toLowerCase()) || 
+                c.codeSGN.toLowerCase().includes(courseSearch.toLowerCase()) ||
+                c.syllabus.toLowerCase().includes(courseSearch.toLowerCase())
+              )
+              .map(course => (
+                <div key={course.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 font-mono text-[10px] font-extrabold rounded-md border border-blue-100">
+                        SGN: {course.codeSGN}
+                      </span>
+                      <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-full">
+                        ⏱ {course.duration}h
+                      </span>
+                    </div>
+
+                    <h4 className="font-extrabold text-slate-800 text-xs leading-snug">{course.name}</h4>
+
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {course.modalities.map(mod => (
+                        <span key={mod} className="px-2 py-0.5 bg-slate-50 text-slate-600 text-[9px] font-bold rounded border border-slate-200">
+                          {mod}
+                        </span>
+                      ))}
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-3 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100">
+                      <strong className="text-slate-700">Ementa: </strong> {course.syllabus}
+                    </p>
+
+                    {course.prerequisites && (
+                      <p className="text-[10px] text-amber-700 bg-amber-50/60 p-2 rounded-lg border border-amber-100 font-medium">
+                        <strong>Pré-requisito:</strong> {course.prerequisites}
+                      </p>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-bold flex justify-between items-center">
+                    <span>Capacidade Max: {course.maxParticipants} alunos</span>
+                    <span className="text-emerald-600 font-extrabold">● Ativo SGN</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Perfis de Acesso Tab */}
+      {activeTab === "perfis" && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 className="text-base font-extrabold text-slate-800">Perfis de Acesso & Matriz de Permissões</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Definição dos papeis de usuário com perfis diferenciados para Administração Geral, Administração Local (PCP), Comercial, Secretaria, Faturista e Instrutores.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {INITIAL_USER_PROFILES.map(usr => (
+              <div key={usr.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-slate-900 text-white rounded-xl">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-slate-800 text-sm leading-tight">{usr.name}</h4>
+                      <p className="text-[10px] text-slate-400 font-medium">{usr.email}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 text-xs border border-slate-150">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 text-[10px] font-bold uppercase">Perfil de Acesso:</span>
+                    <span className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-full ${
+                      usr.role === "Adm Geral" ? "bg-purple-100 text-purple-800" :
+                      usr.role === "Admin. Local" ? "bg-blue-100 text-blue-800" :
+                      usr.role === "Comercial" ? "bg-emerald-100 text-emerald-800" :
+                      usr.role === "Secretaria" ? "bg-amber-100 text-amber-800" :
+                      "bg-slate-200 text-slate-800"
+                    }`}>
+                      {usr.role}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 text-[10px] font-bold uppercase">Função:</span>
+                    <span className="font-bold text-slate-700">{usr.functionName}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 text-[10px] font-bold uppercase">Regional-Base:</span>
+                    <span className="font-bold text-slate-700">{usr.regional}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Bloqueio de Horário */}
+      {isBlockModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in-50 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <h3 className="font-bold text-slate-800 text-sm">Novo Bloqueio de Horário na Agenda</h3>
+              <button 
+                onClick={() => setIsBlockModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleAddBlock} className="p-6 space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-slate-600">Curso Solicitado</label>
+                <label className="font-bold text-slate-700">Instrutor *</label>
                 <select
-                  value={simCourseId}
-                  onChange={(e) => setSimCourseId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 font-medium"
+                  value={blockInstructorId}
+                  onChange={(e) => setBlockInstructorId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500 font-medium text-slate-800"
                 >
-                  {courses.map(course => (
-                    <option key={course.id} value={course.id}>
-                      {course.name.split("-")[0].trim()} ({course.duration}h)
+                  {instructors.map(inst => (
+                    <option key={inst.id} value={inst.id}>
+                      {inst.id} - {inst.name}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Date selection */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Data Início</label>
+                  <label className="font-bold text-slate-700">Dia da Semana *</label>
+                  <select
+                    value={blockDay}
+                    onChange={(e) => setBlockDay(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500 font-medium"
+                  >
+                    {["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"].map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Motivo do Bloqueio *</label>
+                  <select
+                    value={blockReason}
+                    onChange={(e) => setBlockReason(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500 font-medium"
+                  >
+                    <option value="Férias">Férias</option>
+                    <option value="Atestado Médico">Atestado Médico</option>
+                    <option value="Banco de Horas">Banco de Horas</option>
+                    <option value="Compromisso Particular">Compromisso Particular</option>
+                    <option value="Feriado">Feriado</option>
+                    <option value="Treinamento">Treinamento</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Horário Início *</label>
                   <input
-                    type="date"
-                    value={simStartDate}
-                    onChange={(e) => setSimStartDate(e.target.value)}
-                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 text-xs font-medium"
+                    type="time"
+                    value={blockStart}
+                    onChange={(e) => setBlockStart(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500 font-medium"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-slate-600">Data Término</label>
+                  <label className="font-bold text-slate-700">Horário Fim *</label>
                   <input
-                    type="date"
-                    value={simEndDate}
-                    onChange={(e) => setSimEndDate(e.target.value)}
-                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 text-xs font-medium"
+                    type="time"
+                    value={blockEnd}
+                    onChange={(e) => setBlockEnd(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500 font-medium"
                   />
                 </div>
               </div>
 
-              {/* Shift selection */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Vigência Início *</label>
+                  <input
+                    type="date"
+                    value={blockStartDate}
+                    onChange={(e) => setBlockStartDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500 font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Vigência Término *</label>
+                  <input
+                    type="date"
+                    value={blockEndDate}
+                    onChange={(e) => setBlockEndDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500 font-medium"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1">
-                <label className="font-bold text-slate-600">Período / Turno</label>
-                <select
-                  value={simPeriod}
-                  onChange={(e) => setSimPeriod(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 font-medium"
+                <label className="font-bold text-slate-700">Observações Adicionais</label>
+                <textarea
+                  value={blockNotes}
+                  onChange={(e) => setBlockNotes(e.target.value)}
+                  placeholder="Justificativa ou detalhes do bloqueio..."
+                  rows={2}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500 resize-none font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsBlockModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
                 >
-                  <option value="Matutino">Matutino (Manhã)</option>
-                  <option value="Vespertino">Vespertino (Tarde)</option>
-                  <option value="Noturno">Noturno (Noite)</option>
-                  <option value="Integral">Integral (Manhã + Tarde)</option>
-                  <option value="Sábado Integral">Sábado Integral</option>
-                </select>
-              </div>
-
-              {/* Days selection text */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-600">Esquema de Dias</label>
-                <select
-                  value={simDays}
-                  onChange={(e) => setSimDays(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 font-medium"
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 shadow-xs"
                 >
-                  <option value="Segunda a Sexta">Segunda a Sexta</option>
-                  <option value="Sábado">Apenas Sábados</option>
-                  <option value="Seg, Qua, Sex">Segunda, Quarta e Sexta</option>
-                  <option value="Ter, Qui">Terça e Quinta</option>
-                </select>
+                  Gravar Bloqueio
+                </button>
               </div>
-            </div>
-
-            <div className="bg-blue-50/50 p-4 rounded-2xl text-[11px] text-blue-700 border border-blue-250">
-              <p className="font-bold">Como funciona a inteligência?</p>
-              <p className="mt-1 leading-relaxed font-medium">
-                O sistema cruza as competências de cada professor (NR cadastrada), verifica o turno de preferência, os dias de disponibilidade semanal e verifica se o professor já possui turmas ativas alocadas entre as datas propostas.
-              </p>
-            </div>
+            </form>
           </div>
-
-          {/* Simulator Results Panel */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Compatible Section */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-              <h4 className="text-sm font-bold text-emerald-700 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                Instrutores Habilitados e Disponíveis ({compatibleInsts.length})
-              </h4>
-
-              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                {compatibleInsts.length > 0 ? (
-                  compatibleInsts.map(({ instructor }) => (
-                    <div key={instructor.id} className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-800 text-xs">{instructor.name}</span>
-                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[8px] font-bold rounded-full">
-                            {instructor.linkType}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-medium">
-                          Regional: {instructor.regional} | Competências: {instructor.competencies.join(", ")}
-                        </p>
-                      </div>
-                      <div className="text-left sm:text-right shrink-0">
-                        <p className="text-[10px] text-slate-500 font-bold">📅 {instructor.availability}</p>
-                        <p className="text-[10px] text-emerald-700 font-bold mt-0.5">✓ 100% Compatível</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-400 italic text-center py-4">Nenhum instrutor compatível para as opções selecionadas.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Incompatible Section */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-              <h4 className="text-sm font-bold text-slate-600 flex items-center gap-1.5 border-b border-slate-100 pb-2">
-                <XCircle className="w-4 h-4 text-slate-400" />
-                Instrutores Incompatíveis ({incompatibleInsts.length})
-              </h4>
-
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                {incompatibleInsts.map(({ instructor, reasons }) => (
-                  <div key={instructor.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-700 text-xs">{instructor.name}</span>
-                        <span className="px-2 py-0.5 bg-slate-200 text-slate-600 text-[8px] font-bold rounded-full">
-                          {instructor.linkType}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-medium">
-                        Regional: {instructor.regional} | Competências: {instructor.competencies.join(", ")}
-                      </p>
-                    </div>
-                    <div className="space-y-1 self-start sm:self-center">
-                      {reasons.map((reason, rIdx) => (
-                        <div key={rIdx} className="flex items-start gap-1 text-[10px] text-rose-600 font-bold">
-                          <AlertCircle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
-                          <span>{reason}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-
         </div>
       )}
 
-      {/* Instructor Form Modal */}
+      {/* Instructor Form Modal - Fully aligned with exact user requirement table */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-lg border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in-50 duration-200">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl my-8 overflow-hidden animate-in fade-in-50 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 text-sm">
-                {editingInstructor ? "Editar Cadastro do Instrutor" : "Cadastrar Novo Instrutor"}
-              </h3>
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-sm">
+                  {editingInstructor ? "Editar Cadastro do Instrutor" : "Cadastrar Novo Instrutor"}
+                </h3>
+                <p className="text-[10px] text-slate-400 font-medium">
+                  Preencha os campos obrigatórios conforme o modelo institucional SESI/SENAI
+                </p>
+              </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 text-lg font-bold"
@@ -647,136 +975,300 @@ export default function InstructorScheduleView({
               </button>
             </div>
 
-            <form onSubmit={handleSaveForm} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Name */}
-                <div className="col-span-2 space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Nome do Instrutor *</label>
+            <form onSubmit={handleSaveForm} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto text-xs">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* ID do Instrutor (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>ID do Instrutor</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formId}
+                    onChange={(e) => setFormId(e.target.value)}
+                    placeholder="Ex: 522389"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-slate-800"
+                  />
+                </div>
+
+                {/* Nome completo (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Nome Completo</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    placeholder="Ex: Carlos Eduardo de Souza"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+                    placeholder="Ex: Luiz Ricardo Mereles"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
                   />
                 </div>
 
-                {/* Link Type */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Tipo de Vínculo</label>
+                {/* E-mail (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>E-mail</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    placeholder="Ex: luiz.mereles@sesisc.org.br"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
+                  />
+                </div>
+
+                {/* Telefone (Não) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Telefone</span>
+                    <span className="text-[9px] text-slate-400 font-medium">Opcional</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    placeholder="Ex: (48) 99999-9999"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
+                  />
+                </div>
+
+                {/* Regional-base (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Regional-base</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
+                  <select
+                    value={formRegionalBase}
+                    onChange={(e) => setFormRegionalBase(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
+                  >
+                    {["Centro-Norte", "Oeste", "Serrana", "Norte", "Litoral", "Vale do Itajaí", "Sul", "Sudeste"].map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Unidade-base (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Unidade-base</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formUnitBase}
+                    onChange={(e) => setFormUnitBase(e.target.value)}
+                    placeholder="Ex: Caçador, Videira, Canoinhas"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
+                  />
+                </div>
+
+                {/* Município-base (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Município-base</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formCityBase}
+                    onChange={(e) => setFormCityBase(e.target.value)}
+                    placeholder="Ex: Caçador"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
+                  />
+                </div>
+
+                {/* Tipo de vínculo (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Tipo de Vínculo</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
                   <select
                     value={formLinkType}
                     onChange={(e) => setFormLinkType(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
                   >
-                    <option value="Mensalista">Mensalista (SESI)</option>
-                    <option value="Horista">Horista (SESI)</option>
+                    <option value="Horista">Horista</option>
+                    <option value="Mensalista">Mensalista</option>
                     <option value="Terceirizado">Terceirizado</option>
                   </select>
                 </div>
 
-                {/* Regional */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Regional de Atuação</label>
+                {/* Situação (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Situação</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
                   <select
-                    value={formRegional}
-                    onChange={(e) => setFormRegional(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
+                    value={formStatus}
+                    onChange={(e) => setFormStatus(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
                   >
-                    <option value="Oeste">Oeste</option>
-                    <option value="Serrana">Serrana</option>
-                    <option value="Norte">Norte</option>
-                    <option value="Litoral">Litoral</option>
-                    <option value="Vale do Itajaí">Vale do Itajaí</option>
-                    <option value="Centro-Norte">Centro-Norte</option>
-                    <option value="Sul">Sul</option>
-                    <option value="Sudeste">Sudeste</option>
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
                   </select>
                 </div>
 
-                {/* Contact */}
-                <div className="col-span-2 space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Contato (Tel/E-mail) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formContact}
-                    onChange={(e) => setFormContact(e.target.value)}
-                    placeholder="Ex: (48) 99999-8888 - professor@sesisc.org.br"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
+                {/* Permite deslocamento (Sim) */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Permite Deslocamento?</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
+                  <div className="flex gap-4 pt-2">
+                    <label className="flex items-center gap-1.5 cursor-pointer font-bold text-slate-700">
+                      <input
+                        type="radio"
+                        name="allowsTravel"
+                        checked={formAllowsTravel === true}
+                        onChange={() => setFormAllowsTravel(true)}
+                        className="text-blue-600"
+                      />
+                      Sim
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer font-bold text-slate-700">
+                      <input
+                        type="radio"
+                        name="allowsTravel"
+                        checked={formAllowsTravel === false}
+                        onChange={() => setFormAllowsTravel(false)}
+                        className="text-blue-600"
+                      />
+                      Não
+                    </label>
+                  </div>
                 </div>
 
-                {/* Competencies Checklist */}
-                <div className="col-span-2 space-y-1.5 text-xs">
-                  <label className="font-semibold text-slate-600">Competências Técnicas / NRs Habilitadas</label>
-                  <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    {["NR 10", "SEP", "NR 35", "NR 33", "NR 20", "NR 12"].map(nr => (
-                      <label key={nr} className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-700 select-none">
+                {/* Regionais atendidas (Não) */}
+                <div className="col-span-1 sm:col-span-2 space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Regionais Atendidas</span>
+                    <span className="text-[9px] text-slate-400 font-medium">Opcional</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    {(["Centro-Norte", "Oeste", "Serrana", "Norte", "Litoral", "Vale do Itajaí", "Sul", "Sudeste"] as Regional[]).map(reg => (
+                      <button
+                        key={reg}
+                        type="button"
+                        onClick={() => toggleRegionalAttended(reg)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all ${
+                          formAttendedRegionals.includes(reg)
+                            ? "bg-slate-900 text-white border-slate-900"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        {reg}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Período de disponibilidade (Manhã, Tarde, Noite) */}
+                <div className="col-span-1 sm:col-span-2 space-y-1.5">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Período de Disponibilidade</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório (mín. 1)</span>
+                  </label>
+                  <div className="flex gap-3 p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
+                    {(["Manhã", "Tarde", "Noite"] as const).map(p => (
+                      <label key={p} className="flex items-center gap-1.5 cursor-pointer font-bold text-slate-800 text-xs">
                         <input
                           type="checkbox"
-                          checked={formCompetencies.includes(nr)}
-                          onChange={() => toggleCompetencyInForm(nr)}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          checked={formPeriods.includes(p)}
+                          onChange={() => togglePeriod(p)}
+                          className="rounded border-slate-300 text-blue-600"
                         />
-                        {nr}
+                        {p}
                       </label>
                     ))}
                   </div>
                 </div>
 
-                {/* Availability */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Disponibilidade Semanal</label>
-                  <input
-                    type="text"
-                    value={formAvailability}
-                    onChange={(e) => setFormAvailability(e.target.value)}
-                    placeholder="Ex: Seg, Qua, Sex"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
+                {/* Dias da Semana de disponibilidade (Segunda a Sábado) */}
+                <div className="col-span-1 sm:col-span-2 space-y-1.5">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Dias da Semana com Disponibilidade</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório (mín. 1)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    {(["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"] as const).map(d => (
+                      <label key={d} className="flex items-center gap-1.5 cursor-pointer font-bold text-slate-700 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={formAvailableDays.includes(d)}
+                          onChange={() => toggleDay(d)}
+                          className="rounded border-slate-300 text-blue-600"
+                        />
+                        {d}
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Constraints */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Restrições de Turno/Horas</label>
-                  <input
-                    type="text"
-                    value={formConstraints}
-                    onChange={(e) => setFormConstraints(e.target.value)}
-                    placeholder="Ex: Apenas noturno, Sábados"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
+                {/* NRs / Competências */}
+                <div className="col-span-1 sm:col-span-2 space-y-1.5">
+                  <label className="font-bold text-slate-700">Competências Técnicas / Matriz NRs</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    {["NR 05 - CIPA", "NR 06 - EPI", "NR 10 - Básico", "NR 10 - SEP", "NR 11 - Empilhadeira", "NR 11 - Ponte Rolante", "NR 12", "NR 13 - Caldeiras", "NR 17", "NR 18 - PEMT", "NR 20", "NR 23", "NR 31 - Máquinas Florestais", "NR 33", "NR 35"].map(comp => (
+                      <label key={comp} className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={formCompetencies.includes(comp)}
+                          onChange={() => toggleCompetencyInForm(comp)}
+                          className="rounded border-slate-300 text-blue-600"
+                        />
+                        {comp}
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Notes */}
-                <div className="col-span-2 space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Observações Adicionais</label>
+                {/* Observações (Sim) */}
+                <div className="col-span-1 sm:col-span-2 space-y-1">
+                  <label className="font-bold text-slate-700 flex items-center justify-between">
+                    <span>Observações do Instrutor</span>
+                    <span className="text-[9px] text-rose-500 font-extrabold">Obrigatório</span>
+                  </label>
                   <textarea
+                    required
                     value={formNotes}
                     onChange={(e) => setFormNotes(e.target.value)}
-                    placeholder="Informações adicionais relevantes, especialidades..."
+                    placeholder="Ex: Atende somente aos sábados ou período noturno durante a semana"
                     rows={2}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 resize-none text-xs"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 resize-none font-medium"
                   />
                 </div>
+
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-1.5 px-5 py-2 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 shadow-xs"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  Salvar
+                  Salvar Cadastro
                 </button>
               </div>
             </form>

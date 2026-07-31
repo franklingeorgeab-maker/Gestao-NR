@@ -176,9 +176,11 @@ export default function DashboardView({ classes, instructors, courses }: Dashboa
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200 self-start md:self-auto">
-          <MapPin className="w-4 h-4 text-slate-400 ml-2 mr-1" />
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1.5">Regional:</span>
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200 self-start md:self-auto max-w-full">
+          <div className="flex items-center mr-1">
+            <MapPin className="w-4 h-4 text-slate-400 ml-1 mr-1" />
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Regional:</span>
+          </div>
           {["Todas", "Oeste", "Serrana", "Norte", "Litoral", "Vale do Itajaí", "Centro-Norte", "Sul", "Sudeste"].map((reg) => (
             <button
               key={reg}

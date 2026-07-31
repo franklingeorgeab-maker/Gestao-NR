@@ -284,76 +284,84 @@ export default function CalendarView({ classes, courses, instructors }: Calendar
             </div>
           </div>
 
-          {/* Weekday Labels */}
-          <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 uppercase tracking-wider">
-            <span>Dom</span>
-            <span>Seg</span>
-            <span>Ter</span>
-            <span>Qua</span>
-            <span>Qui</span>
-            <span>Sex</span>
-            <span>Sáb</span>
-          </div>
+          {/* Weekday Labels & Month Days Grid */}
+          <div className="overflow-x-auto">
+            <div className="min-w-[320px] space-y-1.5">
+              <div className="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 uppercase tracking-wider">
+                <span>Dom</span>
+                <span>Seg</span>
+                <span>Ter</span>
+                <span>Qua</span>
+                <span>Qui</span>
+                <span>Sex</span>
+                <span>Sáb</span>
+              </div>
 
-          {/* Month Days Grid */}
-          <div className="grid grid-cols-7 gap-1.5 min-h-[300px]">
-            {calendarDays.map((day, idx) => {
-              if (day === null) {
-                return <div key={`empty-${idx}`} className="bg-slate-50/50 rounded-lg border border-slate-100/30"></div>;
-              }
+              <div className="grid grid-cols-7 gap-1 sm:gap-1.5 min-h-[300px]">
+                {calendarDays.map((day, idx) => {
+                  if (day === null) {
+                    return <div key={`empty-${idx}`} className="bg-slate-50/50 rounded-lg border border-slate-100/30"></div>;
+                  }
 
-              const dayClasses = getClassesForDay(day);
+                  const dayClasses = getClassesForDay(day);
 
-              return (
-                <div 
-                  key={`day-${day}`} 
-                  className={`bg-slate-50/50 p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between h-[68px] transition-all hover:bg-slate-50 ${
-                    day === 20 && currentMonth === 6 && currentYear === 2026
-                      ? "ring-2 ring-blue-500 bg-blue-50/20 border-blue-200"
-                      : ""
-                  }`}
-                >
-                  <span className={`text-[11px] font-extrabold font-mono ${
-                    day === 20 && currentMonth === 6 && currentYear === 2026
-                      ? "text-blue-600 font-black"
-                      : "text-slate-500"
-                  }`}>
-                    {day}
-                  </span>
+                  return (
+                    <div 
+                      key={`day-${day}`} 
+                      className={`bg-slate-50/50 p-1 sm:p-2 rounded-xl border border-slate-200/80 flex flex-col justify-between h-[64px] sm:h-[68px] transition-all hover:bg-slate-50 cursor-pointer ${
+                        day === 20 && currentMonth === 6 && currentYear === 2026
+                          ? "ring-2 ring-blue-500 bg-blue-50/20 border-blue-200"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        if (dayClasses.length > 0) {
+                          setSelectedClass(dayClasses[0]);
+                        }
+                      }}
+                    >
+                      <span className={`text-[10px] sm:text-[11px] font-extrabold font-mono ${
+                        day === 20 && currentMonth === 6 && currentYear === 2026
+                          ? "text-blue-600 font-black"
+                          : "text-slate-500"
+                      }`}>
+                        {day}
+                      </span>
 
-                  {/* Day events indicator */}
-                  <div className="space-y-0.5 overflow-hidden">
-                    {dayClasses.slice(0, 3).map(dc => {
-                      const courseShort = courses.find(cr => cr.id === dc.courseId)?.name.split("-")[0].trim() || "NR";
-                      
-                      return (
-                        <div
-                          key={dc.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedClass(dc);
-                          }}
-                          className={`text-[8px] font-bold px-1 py-0.2 rounded truncate select-none leading-tight ${
-                            dc.type === "PAC" ? "bg-indigo-100 text-indigo-800" :
-                            dc.type === "RPC" ? "bg-emerald-100 text-emerald-800" :
-                            "bg-violet-100 text-violet-800"
-                          } ${selectedClass?.id === dc.id ? "ring-1 ring-slate-800" : ""}`}
-                          title={`${courseShort} - ${dc.clientName}`}
-                        >
-                          {courseShort}
-                        </div>
-                      );
-                    })}
+                      {/* Day events indicator */}
+                      <div className="space-y-0.5 overflow-hidden">
+                        {dayClasses.slice(0, 3).map(dc => {
+                          const courseShort = courses.find(cr => cr.id === dc.courseId)?.name.split("-")[0].trim() || "NR";
+                          
+                          return (
+                            <div
+                              key={dc.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedClass(dc);
+                              }}
+                              className={`text-[8px] font-bold px-1 py-0.2 rounded truncate select-none leading-tight ${
+                                dc.type === "PAC" ? "bg-indigo-100 text-indigo-800" :
+                                dc.type === "RPC" ? "bg-emerald-100 text-emerald-800" :
+                                "bg-violet-100 text-violet-800"
+                              } ${selectedClass?.id === dc.id ? "ring-1 ring-slate-800" : ""}`}
+                              title={`${courseShort} - ${dc.clientName}`}
+                            >
+                              {courseShort}
+                            </div>
+                          );
+                        })}
 
-                    {dayClasses.length > 3 && (
-                      <div className="text-[7px] text-slate-400 text-center font-bold">
-                        + {dayClasses.length - 3} mais
+                        {dayClasses.length > 3 && (
+                          <div className="text-[7px] text-slate-400 text-center font-bold">
+                            + {dayClasses.length - 3} mais
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           <p className="text-[10px] text-slate-400 italic text-center">
