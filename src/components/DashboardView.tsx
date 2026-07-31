@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Users, 
   TrendingUp, 
@@ -15,7 +15,11 @@ import {
   Layers, 
   UserCheck, 
   Clock,
-  MapPin
+  MapPin,
+  ShieldCheck,
+  Lock,
+  ShieldAlert,
+  Building2
 } from "lucide-react";
 import { 
   ResponsiveContainer, 
@@ -32,26 +36,54 @@ import {
   PieChart,
   Pie
 } from "recharts";
-import { CourseClass, Instructor, Course, Regional } from "../types";
+import { CourseClass, Instructor, Course, Regional, AccessProfile } from "../types";
 
 interface DashboardViewProps {
   classes: CourseClass[];
   instructors: Instructor[];
   courses: Course[];
+  currentProfile: AccessProfile;
+  userRegional?: Regional;
 }
 
-export default function DashboardView({ classes, instructors, courses }: DashboardViewProps) {
-  const [selectedRegional, setSelectedRegional] = useState<Regional | "Todas">("Todas");
+export default function DashboardView({ 
+  classes, 
+  instructors, 
+  courses, 
+  currentProfile,
+  userRegional = "Centro-Norte"
+}: DashboardViewProps) {
+  const isAdmGeral = currentProfile === "Supervisão";
+  const isAdmLocal = currentProfile === "PCP";
+  const isAdm = isAdmGeral || isAdmLocal;
+
+  // Local ADM regional
+  const localRegional: Regional = userRegional;
+
+  // Selected regional state
+  const [selectedRegional, setSelectedRegional] = useState<Regional | "Todas">(
+    isAdmLocal ? localRegional : "Todas"
+  );
+
+  // Sync selectedRegional when profile changes
+  useEffect(() => {
+    if (isAdmLocal) {
+      setSelectedRegional(localRegional);
+    }
+  }, [isAdmLocal, localRegional]);
+
+  // Determine effective regional
+  const effectiveRegional = isAdmLocal ? localRegional : selectedRegional;
 
   // Filter classes based on regional
-  const filteredClasses = selectedRegional === "Todas" 
+  const filteredClasses = effectiveRegional === "Todas" 
     ? classes 
-    : classes.filter(c => c.regional === selectedRegional);
+    : classes.filter(c => c.regional === effectiveRegional);
 
   // Filter instructors based on regional
-  const filteredInstructors = selectedRegional === "Todas"
+  const filteredInstructors = effectiveRegional === "Todas"
     ? instructors
-    : instructors.filter(i => i.regional === selectedRegional);
+    : instructors.filter(i => i.regional === effectiveRegional);
 
   // 1. KPI Calculations
   const inProgressClasses = filteredClasses.filter(c => c.status === "Em Andamento");
@@ -165,14 +197,42 @@ export default function DashboardView({ classes, instructors, courses }: Dashboa
     };
   });
 
+  if (!isAdm) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl text-amber-900 space-y-3 shadow-xs">
+        <div className="flex items-center gap-2 font-extrabold text-base">
+          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
+          <span>Acesso Exclusivo aos Administradores (ADM)</span>
+        </div>
+        <p className="text-xs text-amber-800 leading-relaxed">
+          O Painel Gerencial de Indicadores é reservado exclusivamente para os perfis de <strong>ADM Geral (Supervisão)</strong> e <strong>ADM Local (PCP)</strong>.
+          Por favor, utilize os menus da barra lateral correspondentes às suas atribuições operacionais.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Upper header section with Regional selector */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-sm gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">Painel Geral de Indicadores</h2>
-          <p className="text-sm text-slate-500">
-            Acompanhamento em tempo real das turmas e instrutores de Normas Regulamentadoras.
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">Painel Geral de Indicadores</h2>
+            {isAdmGeral && (
+              <span className="px-2.5 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-extrabold rounded-full border border-purple-200 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-purple-600" /> ADM Geral (Acesso Total)
+              </span>
+            )}
+            {isAdmLocal && (
+              <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-extrabold rounded-full border border-blue-200 flex items-center gap-1">
+                <Building2 className="w-3 h-3 text-blue-600" /> ADM Local ({localRegional})
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {isAdmGeral && "Acompanhamento em tempo real de todas as 5 regionais do SESI Santa Catarina."}
+            {isAdmLocal && `Visão restrita e detalhada dos dados e indicadores da Regional ${localRegional}.`}
           </p>
         </div>
 
@@ -181,19 +241,28 @@ export default function DashboardView({ classes, instructors, courses }: Dashboa
             <MapPin className="w-4 h-4 text-slate-400 ml-1 mr-1" />
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Regional:</span>
           </div>
-          {["Todas", "Oeste", "Serrana", "Norte", "Litoral", "Vale do Itajaí", "Centro-Norte", "Sul", "Sudeste"].map((reg) => (
-            <button
-              key={reg}
-              onClick={() => setSelectedRegional(reg as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                (reg === "Todas" && selectedRegional === "Todas") || selectedRegional === reg
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              {reg}
-            </button>
-          ))}
+
+          {isAdmLocal ? (
+            <div className="flex items-center gap-2 bg-blue-50/90 px-3 py-1.5 rounded-lg border border-blue-200 text-blue-800 text-xs font-extrabold">
+              <Lock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>{localRegional}</span>
+              <span className="text-[10px] font-normal text-blue-600 hidden sm:inline">(Acesso Fixo ADM Local)</span>
+            </div>
+          ) : (
+            ["Todas", "Oeste", "Serrana", "Norte", "Litoral", "Vale do Itajaí", "Centro-Norte", "Sul", "Sudeste"].map((reg) => (
+              <button
+                key={reg}
+                onClick={() => setSelectedRegional(reg as any)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  (reg === "Todas" && selectedRegional === "Todas") || selectedRegional === reg
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {reg}
+              </button>
+            ))
+          )}
         </div>
       </div>
 

@@ -20,7 +20,15 @@ import {
   Calendar,
   Save,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck,
+  Lock,
+  Building2,
+  Briefcase,
+  FileText,
+  DollarSign,
+  Check,
+  X
 } from "lucide-react";
 import { Instructor, Course, CourseClass, Regional, InstructorLinkType, AgendaBlock, UserProfile } from "../types";
 import { INITIAL_AGENDA_BLOCKS, INITIAL_USER_PROFILES } from "../data/mockData";
@@ -768,53 +776,291 @@ export default function InstructorScheduleView({
 
       {/* Perfis de Acesso Tab */}
       {activeTab === "perfis" && (
-        <div className="space-y-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-base font-extrabold text-slate-800">Perfis de Acesso & Matriz de Permissões</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Definição dos papeis de usuário com perfis diferenciados para Administração Geral, Administração Local (PCP), Comercial, Secretaria, Faturista e Instrutores.
-            </p>
+        <div className="space-y-6">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-blue-600" />
+                <h3 className="text-base font-extrabold text-slate-800">Perfis de Acesso & Matriz de Permissões</h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Estrutura de governança e controle de acesso com permissões segregadas por perfil operacional.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 font-bold rounded-xl border border-blue-200">
+                5 Perfis Operacionais
+              </span>
+              <span className="px-3 py-1 bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-200">
+                Todas as Regionais
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {INITIAL_USER_PROFILES.map(usr => (
-              <div key={usr.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          {/* 1. Official Role Specifications */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-slate-400" /> Definição Detalhada dos Perfis do Sistema
+            </h4>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* ADM */}
+              <div className="bg-white p-5 rounded-2xl border border-purple-200 shadow-sm space-y-3 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-2 h-full bg-purple-600" />
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-slate-900 text-white rounded-xl">
-                      <User className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2.5 bg-purple-600 text-white rounded-xl shadow-xs">
+                      <ShieldCheck className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-slate-800 text-sm leading-tight">{usr.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium">{usr.email}</p>
+                      <h5 className="font-extrabold text-slate-900 text-sm">ADM (Administração Geral)</h5>
+                      <span className="text-[10px] font-bold text-purple-700 uppercase bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                        Acesso Total • Multirregional
+                      </span>
                     </div>
                   </div>
                 </div>
-
-                <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 text-xs border border-slate-150">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400 text-[10px] font-bold uppercase">Perfil de Acesso:</span>
-                    <span className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-full ${
-                      usr.role === "Adm Geral" ? "bg-purple-100 text-purple-800" :
-                      usr.role === "Admin. Local" ? "bg-blue-100 text-blue-800" :
-                      usr.role === "Comercial" ? "bg-emerald-100 text-emerald-800" :
-                      usr.role === "Secretaria" ? "bg-amber-100 text-amber-800" :
-                      "bg-slate-200 text-slate-800"
-                    }`}>
-                      {usr.role}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400 text-[10px] font-bold uppercase">Função:</span>
-                    <span className="font-bold text-slate-700">{usr.functionName}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400 text-[10px] font-bold uppercase">Regional-Base:</span>
-                    <span className="font-bold text-slate-700">{usr.regional}</span>
-                  </div>
+                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 font-medium">
+                  Acesso total ao sistema. Gerencia usuários, perfis, regionais, produtos, docentes, turmas, processos, dashboards, relatórios, configurações e parametrizações gerais. Visualiza e edita informações de todas as regionais.
+                </p>
+                <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold text-slate-500">
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Gestão de Usuários</span>
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Parametrização Geral</span>
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Todas as Regionais</span>
                 </div>
               </div>
-            ))}
+
+              {/* ADM LOCAL */}
+              <div className="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm space-y-3 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-2 h-full bg-blue-600" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2.5 bg-blue-600 text-white rounded-xl shadow-xs">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h5 className="font-extrabold text-slate-900 text-sm">ADM LOCAL (Admin. Local / PCP)</h5>
+                      <span className="text-[10px] font-bold text-blue-700 uppercase bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        Gestão Operacional Regional
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 font-medium">
+                  Gerencia toda a operação da regional. Pode cadastrar e editar docentes, competências, materiais, clientes, turmas, agendas e demais registros operacionais da regional. Acompanha processos, indicadores e relatórios. Não possui acesso às configurações gerais da plataforma nem aos usuários de outras regionais.
+                </p>
+                <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold text-slate-500">
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Docentes & Competências</span>
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Turmas & Ensalamento</span>
+                  <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200 flex items-center gap-1"><X className="w-3 h-3" /> Sem Acesso a Outras Regionais</span>
+                </div>
+              </div>
+
+              {/* COMERCIAL */}
+              <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm space-y-3 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-2 h-full bg-emerald-600" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs">
+                      <Briefcase className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h5 className="font-extrabold text-slate-900 text-sm">COMERCIAL</h5>
+                      <span className="text-[10px] font-bold text-emerald-700 uppercase bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Propostas, Oportunidades & Reservas
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 font-medium">
+                  Acesso de consulta a toda a operação da sua regional. Pode visualizar docentes, competências, agenda, disponibilidade, turmas, processos, matrículas, indicadores, calendário e status das etapas. É responsável pela criação de oportunidades, reservas e pré-turmas, além do registro das informações comerciais. Não pode editar cadastros de docentes, fichas de cursos, competências, configurações, parâmetros operacionais ou registros pertencentes às demais etapas do processo.
+                </p>
+                <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold text-slate-500">
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Criar Oportunidades & Pré-Turmas</span>
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Consulta Agenda & Calendário</span>
+                  <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200 flex items-center gap-1"><X className="w-3 h-3" /> Não Edita Cadastro Docente/Curso</span>
+                </div>
+              </div>
+
+              {/* SECRETARIA */}
+              <div className="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm space-y-3 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-2 h-full bg-amber-500" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-xs">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h5 className="font-extrabold text-slate-900 text-sm">SECRETARIA</h5>
+                      <span className="text-[10px] font-bold text-amber-700 uppercase bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                        Matrículas, Documentos & Certificados
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 font-medium">
+                  Acesso de consulta à operação necessária ao desempenho de suas atividades. Atua após a criação da pré-turma pelo Comercial e pode editar somente os campos administrativos sob sua responsabilidade, como matrículas, documentação, listas de presença, credenciais, certificados e encerramento administrativo da turma. Não pode criar pré-turmas, ensalar docentes, cadastrar ou editar docentes, alterar competências, editar fichas de cursos, conteúdos programáticos ou configurações do sistema. Não possui acesso aos dashboards e indicadores de faturamento.
+                </p>
+                <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold text-slate-500">
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Matrículas & Certificados</span>
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Listas de Presença & Credenciais</span>
+                  <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200 flex items-center gap-1"><X className="w-3 h-3" /> Sem Pré-Turma ou Faturamento</span>
+                </div>
+              </div>
+
+              {/* FATURISTA */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-300 shadow-sm space-y-3 relative overflow-hidden lg:col-span-2">
+                <div className="absolute top-0 right-0 w-2 h-full bg-slate-800" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2.5 bg-slate-800 text-white rounded-xl shadow-xs">
+                      <DollarSign className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h5 className="font-extrabold text-slate-900 text-sm">FATURISTA</h5>
+                      <span className="text-[10px] font-bold text-slate-700 uppercase bg-slate-100 px-2 py-0.5 rounded-full border border-slate-300">
+                        Encerramento Financeiro & Abertura de Chamados
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 font-medium">
+                  Acompanha as informações necessárias ao faturamento, como situação da turma, execução, encerramento e dados contratuais. Pode editar apenas os campos financeiros sob sua responsabilidade. Não altera informações comerciais, pedagógicas ou operacionais.
+                </p>
+                <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold text-slate-500">
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Edição de Campos Financeiros</span>
+                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1"><Check className="w-3 h-3" /> Situação & Chamado de Faturamento</span>
+                  <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200 flex items-center gap-1"><X className="w-3 h-3" /> Não Altera Dados Comerciais/Pedagógicos</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Permission Comparison Matrix */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+              Matriz Comparativa de Permissões
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
+                    <th className="p-3 font-bold">Funcionalidade / Ação</th>
+                    <th className="p-3 font-bold text-center text-purple-700">ADM</th>
+                    <th className="p-3 font-bold text-center text-blue-700">ADM LOCAL</th>
+                    <th className="p-3 font-bold text-center text-emerald-700">COMERCIAL</th>
+                    <th className="p-3 font-bold text-center text-amber-700">SECRETARIA</th>
+                    <th className="p-3 font-bold text-center text-slate-700">FATURISTA</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  <tr>
+                    <td className="p-3 font-semibold">Configurações e Usuários da Plataforma</td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-semibold">Cadastrar/Editar Docentes e Competências</td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-semibold">Criar Oportunidades CRM & Pré-Turmas</td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-semibold">Ensalamento e Alocação de Instrutor</td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-semibold">Matrículas, Listas de Presença e Certificados</td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><span className="text-[10px] text-slate-400 font-bold">Consulta</span></td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-semibold">Editar Dados Financeiros e Chamado de Faturamento</td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-semibold">Visualizar Outras Regionais</td>
+                    <td className="p-3 text-center"><Check className="w-4 h-4 text-emerald-600 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                    <td className="p-3 text-center"><X className="w-4 h-4 text-rose-400 mx-auto" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 3. Active Users Directory */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+              Usuários com Acesso Ativo no Sistema
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {INITIAL_USER_PROFILES.map(usr => (
+                <div key={usr.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-slate-900 text-white rounded-xl">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-slate-800 text-sm leading-tight">{usr.name}</h4>
+                        <p className="text-[10px] text-slate-400 font-medium">{usr.email}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 text-xs border border-slate-150">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400 text-[10px] font-bold uppercase">Perfil de Acesso:</span>
+                      <span className={`px-2.5 py-0.5 text-[10px] font-extrabold rounded-full ${
+                        usr.role === "Adm Geral" ? "bg-purple-100 text-purple-800" :
+                        usr.role === "Admin. Local" ? "bg-blue-100 text-blue-800" :
+                        usr.role === "Comercial" ? "bg-emerald-100 text-emerald-800" :
+                        usr.role === "Secretaria" ? "bg-amber-100 text-amber-800" :
+                        "bg-slate-200 text-slate-800"
+                      }`}>
+                        {usr.role}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400 text-[10px] font-bold uppercase">Função:</span>
+                      <span className="font-bold text-slate-700">{usr.functionName}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400 text-[10px] font-bold uppercase">Regional-Base:</span>
+                      <span className="font-bold text-slate-700">{usr.regional}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

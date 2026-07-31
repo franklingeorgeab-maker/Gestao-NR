@@ -115,6 +115,22 @@ export default function App() {
     saveState("opportunities", opportunities);
   }, [opportunities]);
 
+  // Effect to enforce ADM-only access to Dashboard
+  useEffect(() => {
+    const isAdm = currentProfile === "Supervisão" || currentProfile === "PCP";
+    if (!isAdm && activeMenu === "dashboard") {
+      if (currentProfile === "Comercial") {
+        setActiveMenu("commercial");
+      } else if (currentProfile === "Instrutor") {
+        setActiveMenu("portal");
+      } else if (currentProfile === "Secretária" || currentProfile === "Faturamento") {
+        setActiveMenu("tracker");
+      } else {
+        setActiveMenu("calendar");
+      }
+    }
+  }, [currentProfile, activeMenu]);
+
   // Add Log Helper
   const logAction = (actionText: string) => {
     const timestamp = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -364,18 +380,29 @@ export default function App() {
             </div>
             
             <nav className="space-y-1">
-              {/* Menu 1: Dashboard */}
-              <button
-                onClick={() => { setActiveMenu("dashboard"); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "dashboard"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Painel Gerencial
-              </button>
+              {/* Menu 1: Dashboard (Visível apenas para ADM Geral e ADM Local) */}
+              {(currentProfile === "Supervisão" || currentProfile === "PCP") && (
+                <button
+                  onClick={() => { setActiveMenu("dashboard"); setIsSidebarOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "dashboard"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <LayoutDashboard className="w-4 h-4 text-blue-400" />
+                    <span>Painel Gerencial</span>
+                  </div>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold uppercase ${
+                    currentProfile === "Supervisão" 
+                      ? "bg-purple-100 text-purple-800 border border-purple-200" 
+                      : "bg-blue-100 text-blue-800 border border-blue-200"
+                  }`}>
+                    {currentProfile === "Supervisão" ? "ADM Geral" : "ADM Local"}
+                  </span>
+                </button>
+              )}
 
               {/* Menu 2: General Calendar */}
               <button
@@ -513,6 +540,8 @@ export default function App() {
               classes={classes} 
               instructors={instructors} 
               courses={courses} 
+              currentProfile={currentProfile}
+              userRegional="Centro-Norte"
             />
           )}
 
