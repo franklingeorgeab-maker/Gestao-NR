@@ -124,7 +124,7 @@ export default function InstructorPortalView({
                   </div>
 
                   <h4 className="font-extrabold text-slate-800 text-xs leading-snug">
-                    {course?.name.split("-")[0]}
+                    {course?.name}
                   </h4>
 
                   <p className="text-[11px] text-slate-600 font-medium">

@@ -297,7 +297,7 @@ export default function CommercialSupportView({
 
                     <div className="space-y-1.5 text-xs text-slate-600">
                       <p className="font-bold text-slate-700 truncate">
-                        📚 {course?.name.split("-")[0]}
+                        📚 {course ? `[SGN ${course.codeSGN}] ${course.name}` : "Curso não encontrado"}
                       </p>
                       <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-3 rounded-xl border border-slate-200 mt-1">
                         <div>
@@ -380,7 +380,7 @@ export default function CommercialSupportView({
                 >
                   {courses.map(course => (
                     <option key={course.id} value={course.id}>
-                      {course.name.split("-")[0].trim()} ({course.duration}h)
+                      SGN {course.codeSGN} • {course.name} ({course.duration}h)
                     </option>
                   ))}
                 </select>
@@ -522,7 +522,7 @@ export default function CommercialSupportView({
                   return (
                     <div key={c.id} className="p-3 bg-amber-50/40 border border-amber-200/50 rounded-xl flex justify-between items-center text-xs">
                       <div className="space-y-0.5">
-                        <p className="font-bold text-slate-800">{course?.name.split("-")[0]}</p>
+                        <p className="font-bold text-slate-800">{course ? `[SGN ${course.codeSGN}] ${course.name}` : "Curso"}</p>
                         <p className="text-[10px] text-slate-500 font-medium">Cliente: {c.clientName} | {c.startDate} a {c.endDate}</p>
                       </div>
                       <div className="text-right text-[10px] text-slate-500 font-medium">
@@ -625,7 +625,7 @@ export default function CommercialSupportView({
                     <option value="">Selecione o curso...</option>
                     {courses.map(course => (
                       <option key={course.id} value={course.id}>
-                        {course.name}
+                        SGN {course.codeSGN} • {course.name} ({course.duration}h)
                       </option>
                     ))}
                   </select>

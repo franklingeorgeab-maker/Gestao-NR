@@ -339,7 +339,7 @@ export default function InstructorScheduleView({
         isCompatible = false;
         const confCourse = courses.find(co => co.id === conflictClass.courseId);
         reasons.push(
-          `Conflito: Alocado na turma de ${confCourse?.name.split("-")[0]} para ${conflictClass.clientName} (${conflictClass.startDate} a ${conflictClass.endDate}).`
+          `Conflito: Alocado na turma de ${confCourse?.name || "Curso"} para ${conflictClass.clientName} (${conflictClass.startDate} a ${conflictClass.endDate}).`
         );
       }
 

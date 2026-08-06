@@ -160,7 +160,7 @@ export default function DashboardView({
     const courseClasses = filteredClasses.filter(c => c.courseId === course.id);
     const predicted = courseClasses.reduce((sum, c) => sum + c.revenuePredicted, 0);
     const realized = courseClasses.reduce((sum, c) => sum + c.revenueRealized, 0);
-    const courseShortName = course.name.split("-")[0].trim(); // NR 10, NR 35, etc.
+    const courseShortName = course.name; // Full course name
     return {
       name: courseShortName,
       "Prevista (R$)": predicted,
@@ -501,7 +501,7 @@ export default function DashboardView({
                         </span>
                       </div>
                       <p className="text-xs font-bold text-slate-800 leading-tight">
-                        {course?.name.split("-")[0]} - {c.clientName}
+                        {course?.name} - {c.clientName}
                       </p>
                       <div className="flex justify-between text-[10px] text-slate-500 pt-0.5">
                         <span>📍 {c.city} ({c.regional})</span>
@@ -530,7 +530,7 @@ export default function DashboardView({
                         </span>
                       </div>
                       <p className="text-xs font-bold text-slate-700 leading-tight">
-                        {course?.name.split("-")[0]} - {c.clientName}
+                        {course?.name} - {c.clientName}
                       </p>
                       <div className="flex justify-between text-[10px] text-slate-400">
                         <span>📍 {c.city}</span>
@@ -565,7 +565,7 @@ export default function DashboardView({
                     <div key={c.id} className="p-3 bg-amber-50/40 rounded-xl border border-amber-200/50 flex justify-between items-center">
                       <div>
                         <p className="text-xs font-bold text-slate-800 leading-tight">
-                          Certificados: {course?.name.split("-")[0]}
+                          Certificados: {course?.name}
                         </p>
                         <p className="text-[10px] text-slate-500">
                           {c.clientName} | Concluído em {c.endDate.split("-")[2]}/{c.endDate.split("-")[1]}
@@ -589,7 +589,7 @@ export default function DashboardView({
                         Falta Definir Instrutor!
                       </p>
                       <p className="text-[10px] text-slate-500">
-                        {course?.name.split("-")[0]} em {c.city} - Início: {c.startDate.split("-")[2]}/{c.startDate.split("-")[1]}
+                        {course?.name} em {c.city} - Início: {c.startDate.split("-")[2]}/{c.startDate.split("-")[1]}
                       </p>
                     </div>
                     <span className="text-[9px] bg-red-100 text-red-700 font-black px-2 py-1 rounded-full uppercase">

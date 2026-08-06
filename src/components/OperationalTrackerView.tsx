@@ -132,7 +132,7 @@ export default function OperationalTrackerView({
       const course = courses.find(co => co.id === conflict.courseId);
       return {
         status: "conflict",
-        message: `🚨 Conflito de Agenda! O instrutor ${inst.name} já possui a turma "${course?.name.split("-")[0]}" (${conflict.clientName}) de ${conflict.startDate} a ${conflict.endDate}.`
+        message: `🚨 Conflito de Agenda! O instrutor ${inst.name} já possui a turma "${course?.name || "Curso"}" (${conflict.clientName}) de ${conflict.startDate} a ${conflict.endDate}.`
       };
     }
 
@@ -330,7 +330,7 @@ export default function OperationalTrackerView({
                   </div>
 
                   <h4 className="font-extrabold text-slate-800 text-xs leading-snug">
-                    {course?.name.split("-")[0].trim()}
+                    {course?.name}
                   </h4>
 
                   <div className="flex flex-wrap gap-x-2 gap-y-1 text-[10px] text-slate-500 font-medium">

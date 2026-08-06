@@ -156,7 +156,7 @@ export default function App() {
 
   const handleAddOpportunity = (newOpp: CRMOpportunity) => {
     setOpportunities(prev => [...prev, newOpp]);
-    const courseName = courses.find(c => c.id === newOpp.courseId)?.name.split("-")[0] || "NR";
+    const courseName = courses.find(c => c.id === newOpp.courseId)?.name || "NR";
     logAction(`Oportunidade criada para o cliente ${newOpp.clientName} (Curso: ${courseName}).`);
   };
 
@@ -205,13 +205,13 @@ export default function App() {
 
   const handleAddClass = (newClass: CourseClass) => {
     setClasses(prev => [newClass, ...prev]);
-    const courseName = courses.find(c => c.id === newClass.courseId)?.name.split("-")[0] || "NR";
+    const courseName = courses.find(c => c.id === newClass.courseId)?.name || "NR";
     logAction(`Nova turma de ${courseName} criada em ${newClass.city} para ${newClass.clientName}.`);
   };
 
   const handleUpdateClass = (updatedClass: CourseClass) => {
     setClasses(prev => prev.map(c => c.id === updatedClass.id ? updatedClass : c));
-    const courseName = courses.find(c => c.id === updatedClass.courseId)?.name.split("-")[0] || "NR";
+    const courseName = courses.find(c => c.id === updatedClass.courseId)?.name || "NR";
     logAction(`Turma de ${courseName} (${updatedClass.clientName}) atualizada. Status: ${updatedClass.status}.`);
   };
 

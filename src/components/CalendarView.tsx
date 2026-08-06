@@ -196,7 +196,7 @@ export default function CalendarView({ classes, courses, instructors }: Calendar
               >
                 <option value="Todas">Todos</option>
                 {courses.map(course => (
-                  <option key={course.id} value={course.id}>{course.name.split("-")[0].trim()}</option>
+                  <option key={course.id} value={course.id}>SGN {course.codeSGN} • {course.name}</option>
                 ))}
               </select>
             </div>
@@ -330,7 +330,7 @@ export default function CalendarView({ classes, courses, instructors }: Calendar
                       {/* Day events indicator */}
                       <div className="space-y-0.5 overflow-hidden">
                         {dayClasses.slice(0, 3).map(dc => {
-                          const courseShort = courses.find(cr => cr.id === dc.courseId)?.name.split("-")[0].trim() || "NR";
+                          const courseShort = courses.find(cr => cr.id === dc.courseId)?.name || "NR";
                           
                           return (
                             <div
