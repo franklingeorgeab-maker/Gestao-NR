@@ -217,7 +217,18 @@ export default function App() {
 
   const handleAddCourse = (newCourse: Course) => {
     setCourses(prev => [...prev, newCourse]);
-    logAction(`Novo padrão curricular cadastrado: ${newCourse.codeSGN} (${newCourse.name.split("-")[0]}).`);
+    logAction(`Novo padrão curricular cadastrado: ${newCourse.codeSGN} (${newCourse.name}).`);
+  };
+
+  const handleUpdateCourse = (updatedCourse: Course) => {
+    setCourses(prev => prev.map(c => c.id === updatedCourse.id ? updatedCourse : c));
+    logAction(`Curso ${updatedCourse.codeSGN} (${updatedCourse.name}) atualizado no catálogo.`);
+  };
+
+  const handleDeleteCourse = (courseId: string) => {
+    const course = courses.find(c => c.id === courseId);
+    setCourses(prev => prev.filter(c => c.id !== courseId));
+    logAction(`Curso ${course?.codeSGN || courseId} (${course?.name || ''}) removido do catálogo.`);
   };
 
   // Specialized handler for Instructor Portal to update specific operational step
@@ -600,7 +611,10 @@ export default function App() {
             <CourseRegistryView
               courses={courses}
               instructors={instructors}
+              currentProfile={currentProfile}
               onAddCourse={handleAddCourse}
+              onUpdateCourse={handleUpdateCourse}
+              onDeleteCourse={handleDeleteCourse}
             />
           )}
 

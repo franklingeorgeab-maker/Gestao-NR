@@ -222,7 +222,7 @@ export const INITIAL_COURSES: Course[] = [
   {
     id: "c-4478",
     codeSGN: "4478",
-    name: "NR 06 - EPI (EAD)",
+    name: "NR 06 EPI 6h - EAD",
     duration: 6,
     syllabus: "Responsabilidades, Riscos no ambiente de Trabalho e Tipos de EPI.",
     modalities: ["EAD"],
@@ -232,7 +232,7 @@ export const INITIAL_COURSES: Course[] = [
   {
     id: "c-2458",
     codeSGN: "2458",
-    name: "NR 06 - EPI",
+    name: "NR 06 EPI 4h - presencial",
     duration: 4,
     syllabus: "Treinamento presencial sobre uso adequado, guarda e conservação dos EPIs.",
     modalities: ["Presencial"],
@@ -242,7 +242,7 @@ export const INITIAL_COURSES: Course[] = [
   {
     id: "c-2745",
     codeSGN: "2745",
-    name: "NR 06 - EPI (Compacto)",
+    name: "NR 06 EPI 2h - presencial",
     duration: 2,
     syllabus: "Treinamento objetivo de conscientização e manuseio de Equipamentos de Proteção Individual.",
     modalities: ["Presencial"],
