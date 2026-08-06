@@ -297,7 +297,7 @@ export default function CommercialSupportView({
 
                     <div className="space-y-1.5 text-xs text-slate-600">
                       <p className="font-bold text-slate-700 truncate">
-                        📚 {course ? `[SGN ${course.codeSGN}] ${course.name}` : "Curso não encontrado"}
+                        📚 {course?.name}
                       </p>
                       <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-3 rounded-xl border border-slate-200 mt-1">
                         <div>
@@ -380,7 +380,7 @@ export default function CommercialSupportView({
                 >
                   {courses.map(course => (
                     <option key={course.id} value={course.id}>
-                      SGN {course.codeSGN} • {course.name} ({course.duration}h)
+                      {course.name}
                     </option>
                   ))}
                 </select>
@@ -458,7 +458,8 @@ export default function CommercialSupportView({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-2 font-medium">
                   <p className="text-slate-500">Período Proposto: <span className="font-bold text-slate-700">{queryResult.startDateStr} a {queryResult.endDateStr}</span></p>
-                  <p className="text-slate-500 flex items-center gap-1">Requisito do Treinamento: <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded-full text-[10px] border border-blue-100">{queryResult.requiredNR}</span></p>
+                  <p className="text-slate-500">Treinamento Solicitado: <span className="font-bold text-slate-800">{courses.find(c => c.id === queryCourseId)?.name}</span></p>
+                  <p className="text-slate-500 flex items-center gap-1">Norma / Requisito: <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded-full text-[10px] border border-blue-100">{queryResult.requiredNR}</span></p>
                   <p className="text-slate-500">Instrutores Credenciados na Regional: <span className="font-bold text-slate-700">{queryResult.qualifiedCount}</span></p>
                 </div>
 
@@ -522,7 +523,7 @@ export default function CommercialSupportView({
                   return (
                     <div key={c.id} className="p-3 bg-amber-50/40 border border-amber-200/50 rounded-xl flex justify-between items-center text-xs">
                       <div className="space-y-0.5">
-                        <p className="font-bold text-slate-800">{course ? `[SGN ${course.codeSGN}] ${course.name}` : "Curso"}</p>
+                        <p className="font-bold text-slate-800">{course?.name}</p>
                         <p className="text-[10px] text-slate-500 font-medium">Cliente: {c.clientName} | {c.startDate} a {c.endDate}</p>
                       </div>
                       <div className="text-right text-[10px] text-slate-500 font-medium">
@@ -625,7 +626,7 @@ export default function CommercialSupportView({
                     <option value="">Selecione o curso...</option>
                     {courses.map(course => (
                       <option key={course.id} value={course.id}>
-                        SGN {course.codeSGN} • {course.name} ({course.duration}h)
+                        {course.name}
                       </option>
                     ))}
                   </select>
