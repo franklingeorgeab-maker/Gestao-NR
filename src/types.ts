@@ -141,3 +141,40 @@ export type AccessProfile =
   | "Instrutor" 
   | "Faturamento" 
   | "Supervisão";
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  password: string;
+  name: string;
+  email: string;
+  role: AccessProfile;
+  regional: Regional;
+  unit: string;
+  allowedMenus: string[]; // e.g. ["dashboard", "calendar", "tracker", "instructors", "commercial", "portal", "courses", "documents", "settings"]
+  canApproveSpecialDates: boolean; // e.g. Sunday/Holiday class approvals
+  canManageHolidays: boolean;
+}
+
+export interface SystemHoliday {
+  id: string;
+  date: string; // YYYY-MM-DD or MM-DD
+  name: string;
+  type: "Geral" | "Local";
+  regional?: Regional;
+  city?: string;
+  description?: string;
+}
+
+export interface ClientCompany {
+  id: string;
+  name: string;
+  cnpj: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  regional: Regional;
+  city: string;
+  address?: string;
+  notes?: string;
+}

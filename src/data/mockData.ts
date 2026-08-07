@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Course, Instructor, CourseClass, CRMOpportunity, DocumentReference, OperationalStep, AgendaBlock, UserProfile } from "../types";
+import { Course, Instructor, CourseClass, CRMOpportunity, DocumentReference, OperationalStep, AgendaBlock, UserProfile, UserAccount, SystemHoliday, ClientCompany } from "../types";
 
 export const INITIAL_USER_PROFILES: UserProfile[] = [
   {
@@ -1049,3 +1049,183 @@ export function loadState<T>(stateName: string, defaultData: T): T {
   }
   return defaultData;
 }
+
+export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
+  {
+    id: "usr-1",
+    username: "coordenador",
+    password: "123",
+    name: "Leandro Barbosa",
+    email: "leandro.barbosa@sesisc.org.br",
+    role: "Supervisão",
+    regional: "Centro-Norte",
+    unit: "Jaraguá do Sul",
+    allowedMenus: ["dashboard", "calendar", "tracker", "instructors", "commercial", "portal", "courses", "documents", "settings"],
+    canApproveSpecialDates: true,
+    canManageHolidays: true
+  },
+  {
+    id: "usr-2",
+    username: "pcp",
+    password: "123",
+    name: "Lorinês Silva",
+    email: "lorines@sesisc.org.br",
+    role: "PCP",
+    regional: "Centro-Norte",
+    unit: "Jaraguá do Sul",
+    allowedMenus: ["dashboard", "calendar", "tracker", "instructors", "courses", "documents", "settings"],
+    canApproveSpecialDates: false,
+    canManageHolidays: true
+  },
+  {
+    id: "usr-3",
+    username: "comercial",
+    password: "123",
+    name: "Eduardo Deon",
+    email: "eduardo.deon@sesisc.org.br",
+    role: "Comercial",
+    regional: "Centro-Norte",
+    unit: "Chapecó",
+    allowedMenus: ["commercial", "calendar", "courses", "documents"],
+    canApproveSpecialDates: false,
+    canManageHolidays: false
+  },
+  {
+    id: "usr-4",
+    username: "secretaria",
+    password: "123",
+    name: "Queila Martins",
+    email: "queila@sesisc.org.br",
+    role: "Secretária",
+    regional: "Oeste",
+    unit: "Chapecó",
+    allowedMenus: ["tracker", "calendar", "documents"],
+    canApproveSpecialDates: false,
+    canManageHolidays: false
+  },
+  {
+    id: "usr-5",
+    username: "instrutor",
+    password: "123",
+    name: "Carlos Eduardo Silva",
+    email: "carlos.eduardo@sesisc.org.br",
+    role: "Instrutor",
+    regional: "Centro-Norte",
+    unit: "Jaraguá do Sul",
+    allowedMenus: ["portal", "calendar", "documents"],
+    canApproveSpecialDates: false,
+    canManageHolidays: false
+  },
+  {
+    id: "usr-6",
+    username: "faturamento",
+    password: "123",
+    name: "Mônica Souza",
+    email: "monica@sesisc.org.br",
+    role: "Faturamento",
+    regional: "Serrana",
+    unit: "Lages",
+    allowedMenus: ["tracker", "calendar"],
+    canApproveSpecialDates: false,
+    canManageHolidays: false
+  }
+];
+
+export const INITIAL_HOLIDAYS: SystemHoliday[] = [
+  { id: "hol-1", date: "2026-01-01", name: "Confraternização Universal", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-2", date: "2026-02-17", name: "Carnaval", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-3", date: "2026-04-03", name: "Sexta-feira Santa", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-4", date: "2026-04-21", name: "Tiradentes", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-5", date: "2026-05-01", name: "Dia do Trabalhador", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-6", date: "2026-06-04", name: "Corpus Christi", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-7", date: "2026-08-11", name: "Dia do Estado de Santa Catarina", type: "Geral", description: "Data Comemorativa SC" },
+  { id: "hol-8", date: "2026-09-07", name: "Independência do Brasil", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-9", date: "2026-10-12", name: "Nossa Senhora Aparecida", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-10", date: "2026-11-02", name: "Finados", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-11", date: "2026-11-15", name: "Proclamação da República", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-12", date: "2026-11-20", name: "Dia da Consciência Negra", type: "Geral", description: "Feriado Nacional" },
+  { id: "hol-13", date: "2026-12-25", name: "Natal", type: "Geral", description: "Feriado Nacional" },
+  
+  // Local / Municipal Holidays
+  { id: "hol-loc-1", date: "2026-03-09", name: "Aniversário de Joinville", type: "Local", regional: "Norte", city: "Joinville", description: "Feriado Municipal" },
+  { id: "hol-loc-2", date: "2026-08-25", name: "Aniversário de Chapecó", type: "Local", regional: "Oeste", city: "Chapecó", description: "Feriado Municipal" },
+  { id: "hol-loc-3", date: "2026-09-02", name: "Aniversário de Blumenau", type: "Local", regional: "Vale do Itajaí", city: "Blumenau", description: "Feriado Municipal" },
+  { id: "hol-loc-4", date: "2026-03-23", name: "Aniversário de Florianópolis", type: "Local", regional: "Sudeste", city: "Florianópolis", description: "Feriado Municipal" },
+  { id: "hol-loc-5", date: "2026-11-22", name: "Aniversário de Lages", type: "Local", regional: "Serrana", city: "Lages", description: "Feriado Municipal" }
+];
+
+export const INITIAL_CLIENTS: ClientCompany[] = [
+  {
+    id: "cli-1",
+    name: "WEG Equipamentos Elétricos S.A.",
+    cnpj: "84.429.695/0001-11",
+    contactName: "Roberto Souza (Coord. SST)",
+    email: "treinamentos.sst@weg.net",
+    phone: "(47) 3276-4000",
+    regional: "Norte",
+    city: "Jaraguá do Sul",
+    address: "Av. Prefeito Waldemar Grubba, 3000 - Vila Lalau",
+    notes: "Cliente corporativo ouro. Demanda alta de NR 10, NR 35 e SEP."
+  },
+  {
+    id: "cli-2",
+    name: "Cooperativa Central Aurora Alimentos",
+    cnpj: "83.310.441/0001-22",
+    contactName: "Mariane Silva (Analista RH)",
+    email: "rh.seguranca@aurora.coop.br",
+    phone: "(49) 3321-3000",
+    regional: "Oeste",
+    city: "Chapecó",
+    address: "Rua Valdir Luiz Di Domenico, 100 - Bairro Efapi",
+    notes: "Grande demanda por treinamentos de reciclagem NR 12, NR 33 e NR 35."
+  },
+  {
+    id: "cli-3",
+    name: "Bunge Alimentos S.A.",
+    cnpj: "84.046.101/0001-55",
+    contactName: "Fernando Lima (Gestor de Treinamento)",
+    email: "seguranca.trabalho@bunge.com.br",
+    phone: "(47) 3341-1000",
+    regional: "Vale do Itajaí",
+    city: "Gaspar",
+    address: "Rodovia Jorge Lacerda, 4000",
+    notes: "Turmas RPC fechadas com agenda flexível aos sábados."
+  },
+  {
+    id: "cli-4",
+    name: "Klabin S.A. Papel e Celulose",
+    cnpj: "89.637.490/0001-88",
+    contactName: "Juliana Martins (Engenheira SST)",
+    email: "sst.unidades@klabin.com.br",
+    phone: "(49) 3221-5000",
+    regional: "Serrana",
+    city: "Lages",
+    address: "Av. Presidente Vargas, 1500",
+    notes: "Exige instrutores qualificados em Espaço Confinado (NR 33) e Trabalho em Altura (NR 35)."
+  },
+  {
+    id: "cli-5",
+    name: "Portobello Revestimentos Cerâmicos",
+    cnpj: "82.893.223/0001-33",
+    contactName: "Marcelo Santos (Supervisor EHS)",
+    email: "rh.capacitacao@portobello.com.br",
+    phone: "(48) 3279-2000",
+    regional: "Sudeste",
+    city: "Tijucas",
+    address: "BR 101, Km 163",
+    notes: "Foco em reciclagem e turmas periódicas de NR 10 Basico e SEP."
+  },
+  {
+    id: "cli-6",
+    name: "Tupy S.A. Fundição",
+    cnpj: "84.681.188/0001-99",
+    contactName: "Vanessa Oliveira (Técnica em Segurança)",
+    email: "treinamentos@tupy.com.br",
+    phone: "(47) 4009-1000",
+    regional: "Norte",
+    city: "Joinville",
+    address: "Rua Albano Schmidt, 3400 - Boa Vista",
+    notes: "Sempre agenda em lote de 30 a 50 participantes por etapa."
+  }
+];
+
