@@ -100,6 +100,28 @@ export default function SettingsView({
   const [roleInput, setRoleInput] = useState<AccessProfile>("Comercial");
   const [regionalInput, setRegionalInput] = useState<Regional>("Centro-Norte");
   const [unitInput, setUnitInput] = useState("Jaraguá do Sul");
+  const [allowedMenusInput, setAllowedMenusInput] = useState<string[]>([]);
+
+  const DEFAULT_MENUS_BY_ROLE: Record<AccessProfile, string[]> = {
+    "Supervisão": ["dashboard", "calendar", "tracker", "instructors", "commercial", "portal", "courses", "documents", "settings"],
+    "PCP": ["dashboard", "calendar", "tracker", "instructors", "courses", "documents", "settings"],
+    "Comercial": ["commercial"],
+    "Secretária": ["tracker"],
+    "Instrutor": ["portal"],
+    "Faturamento": ["tracker"]
+  };
+
+  const MENU_OPTIONS: { id: string; label: string }[] = [
+    { id: "dashboard", label: "Painel Gerencial" },
+    { id: "calendar", label: "Agenda Geral" },
+    { id: "tracker", label: "Acompanhamento de Fluxo" },
+    { id: "instructors", label: "Instrutores & Escalas" },
+    { id: "commercial", label: "Apoio ao Comercial" },
+    { id: "portal", label: "Portal do Instrutor" },
+    { id: "courses", label: "Catálogo de Cursos SGN" },
+    { id: "documents", label: "Documentos de Apoio" },
+    { id: "settings", label: "Configuração & Acesso" }
+  ];
 
   // Client Filters & Forms
   const [clientSearch, setClientSearch] = useState("");
@@ -171,6 +193,7 @@ export default function SettingsView({
       setRoleInput(u.role);
       setRegionalInput(u.regional);
       setUnitInput(u.unit);
+      setAllowedMenusInput(u.allowedMenus && u.allowedMenus.length > 0 ? u.allowedMenus : DEFAULT_MENUS_BY_ROLE[u.role]);
     } else {
       setEditingUser(null);
       setUsernameInput("");
@@ -180,22 +203,25 @@ export default function SettingsView({
       setRoleInput("Comercial");
       setRegionalInput("Centro-Norte");
       setUnitInput("Chapecó");
+      setAllowedMenusInput(DEFAULT_MENUS_BY_ROLE["Comercial"]);
     }
     setIsUserModalOpen(true);
+  };
+
+  const handleRoleChange = (newRole: AccessProfile) => {
+    setRoleInput(newRole);
+    setAllowedMenusInput(DEFAULT_MENUS_BY_ROLE[newRole] || ["portal"]);
+  };
+
+  const handleToggleMenuPermission = (menuId: string) => {
+    setAllowedMenusInput(prev => 
+      prev.includes(menuId) ? prev.filter(m => m !== menuId) : [...prev, menuId]
+    );
   };
 
   const handleSaveUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!usernameInput || !nameInput) return;
-
-    const menusByRole: Record<AccessProfile, string[]> = {
-      "Supervisão": ["dashboard", "calendar", "tracker", "instructors", "commercial", "portal", "courses", "documents", "settings"],
-      "PCP": ["dashboard", "calendar", "tracker", "instructors", "courses", "documents", "settings"],
-      "Comercial": ["commercial", "calendar", "courses", "documents"],
-      "Secretária": ["tracker", "calendar", "documents"],
-      "Instrutor": ["portal", "calendar", "documents"],
-      "Faturamento": ["tracker", "calendar"]
-    };
 
     const newUser: UserAccount = {
       id: editingUser ? editingUser.id : `usr-custom-${Date.now()}`,
@@ -206,7 +232,7 @@ export default function SettingsView({
       role: roleInput,
       regional: regionalInput,
       unit: unitInput,
-      allowedMenus: menusByRole[roleInput] || ["calendar"],
+      allowedMenus: allowedMenusInput.length > 0 ? allowedMenusInput : DEFAULT_MENUS_BY_ROLE[roleInput],
       canApproveSpecialDates: roleInput === "Supervisão",
       canManageHolidays: roleInput === "Supervisão" || roleInput === "PCP"
     };
@@ -658,8 +684,12 @@ export default function SettingsView({
 
                   <div className="text-[11px] text-slate-600 space-y-1">
                     <p><strong>Regional:</strong> {u.regional} ({u.unit})</p>
-                    <p className="text-[10px] text-slate-500 truncate">
-                      <strong>Menus permitidos:</strong> {u.allowedMenus.join(", ")}
+                    <p className="text-[10px] text-slate-500 leading-snug">
+                      <strong>Menus permitidos:</strong>{" "}
+                      {u.allowedMenus.map(m => {
+                        const opt = MENU_OPTIONS.find(o => o.id === m);
+                        return opt ? opt.label : m;
+                      }).join(", ")}
                     </p>
                   </div>
 
@@ -1087,16 +1117,39 @@ export default function SettingsView({
                 <label className="font-bold text-slate-700 block mb-1">Perfil de Acesso / Função *</label>
                 <select
                   value={roleInput}
-                  onChange={(e) => setRoleInput(e.target.value as any)}
+                  onChange={(e) => handleRoleChange(e.target.value as AccessProfile)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-blue-500 font-bold"
                 >
                   <option value="Supervisão">Supervisão / Coordenação (Acesso Total)</option>
                   <option value="PCP">PCP / Operação (Turmas & Instrutores)</option>
-                  <option value="Comercial">Comercial (CRM & Propostas)</option>
+                  <option value="Comercial">Comercial (Apoio Comercial)</option>
                   <option value="Secretária">Secretária Acadêmica</option>
-                  <option value="Instrutor">Instrutor de Ensino</option>
+                  <option value="Instrutor">Instrutor de Ensino (Portal do Instrutor)</option>
                   <option value="Faturamento">Faturamento / Financeiro</option>
                 </select>
+              </div>
+
+              {/* Allowed Menus Checkboxes */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-800 text-xs block">
+                    Menus e Módulos Permitidos ({allowedMenusInput.length})
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">Apenas menus marcados ficarão visíveis</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                  {MENU_OPTIONS.map(menu => (
+                    <label key={menu.id} className="flex items-center gap-2 cursor-pointer font-medium text-slate-700 hover:text-slate-950 p-1 hover:bg-white rounded transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={allowedMenusInput.includes(menu.id)}
+                        onChange={() => handleToggleMenuPermission(menu.id)}
+                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span>{menu.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

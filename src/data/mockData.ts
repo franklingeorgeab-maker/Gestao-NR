@@ -1086,7 +1086,7 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
     role: "Comercial",
     regional: "Centro-Norte",
     unit: "Chapecó",
-    allowedMenus: ["commercial", "calendar", "courses", "documents"],
+    allowedMenus: ["commercial"],
     canApproveSpecialDates: false,
     canManageHolidays: false
   },
@@ -1099,7 +1099,7 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
     role: "Secretária",
     regional: "Oeste",
     unit: "Chapecó",
-    allowedMenus: ["tracker", "calendar", "documents"],
+    allowedMenus: ["tracker"],
     canApproveSpecialDates: false,
     canManageHolidays: false
   },
@@ -1112,7 +1112,7 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
     role: "Instrutor",
     regional: "Centro-Norte",
     unit: "Jaraguá do Sul",
-    allowedMenus: ["portal", "calendar", "documents"],
+    allowedMenus: ["portal"],
     canApproveSpecialDates: false,
     canManageHolidays: false
   },
@@ -1125,7 +1125,7 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
     role: "Faturamento",
     regional: "Serrana",
     unit: "Lages",
-    allowedMenus: ["tracker", "calendar"],
+    allowedMenus: ["tracker"],
     canApproveSpecialDates: false,
     canManageHolidays: false
   }

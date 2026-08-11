@@ -504,9 +504,6 @@ export default function CommercialSupportView({
               <Building2 className="w-6 h-6 text-blue-600" />
               Apoio ao Comercial
             </h2>
-            <p className="text-xs text-slate-500">
-              Gestão de propostas comerciais, filtro inteligente de negociação de datas e acompanhamento de clientes.
-            </p>
           </div>
         </div>
 

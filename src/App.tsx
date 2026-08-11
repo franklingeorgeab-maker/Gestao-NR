@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   INITIAL_CLASSES, 
   INITIAL_INSTRUCTORS, 
@@ -161,21 +161,37 @@ export default function App() {
     saveState("clients", clients);
   }, [clients]);
 
-  // Effect to enforce ADM-only access to Dashboard
+  // Dynamic Access Control: Menus allowed for the active user / profile
+  const currentAllowedMenus: string[] = useMemo(() => {
+    if (activeUser?.allowedMenus && activeUser.allowedMenus.length > 0) {
+      return activeUser.allowedMenus;
+    }
+    switch (currentProfile) {
+      case "Supervisão":
+        return ["dashboard", "calendar", "tracker", "instructors", "commercial", "portal", "courses", "documents", "settings"];
+      case "PCP":
+        return ["dashboard", "calendar", "tracker", "instructors", "courses", "documents", "settings"];
+      case "Comercial":
+        return ["commercial"];
+      case "Secretária":
+        return ["tracker"];
+      case "Instrutor":
+        return ["portal"];
+      case "Faturamento":
+        return ["tracker"];
+      default:
+        return ["portal"];
+    }
+  }, [activeUser, currentProfile]);
+
+  // Effect to enforce strict access control according to user's allowedMenus
   useEffect(() => {
-    const isAdm = currentProfile === "Supervisão" || currentProfile === "PCP";
-    if (!isAdm && activeMenu === "dashboard") {
-      if (currentProfile === "Comercial") {
-        setActiveMenu("commercial");
-      } else if (currentProfile === "Instrutor") {
-        setActiveMenu("portal");
-      } else if (currentProfile === "Secretária" || currentProfile === "Faturamento") {
-        setActiveMenu("tracker");
-      } else {
-        setActiveMenu("calendar");
+    if (currentAllowedMenus && currentAllowedMenus.length > 0) {
+      if (!currentAllowedMenus.includes(activeMenu)) {
+        setActiveMenu(currentAllowedMenus[0] as any);
       }
     }
-  }, [currentProfile, activeMenu]);
+  }, [currentProfile, activeUser, currentAllowedMenus, activeMenu]);
 
   // Add Log Helper
   const logAction = (actionText: string) => {
@@ -446,6 +462,33 @@ export default function App() {
                   onChange={(e) => {
                     const prof = e.target.value as AccessProfile;
                     setCurrentProfile(prof);
+                    const matchingUser = users.find(u => u.role === prof);
+                    if (matchingUser) {
+                      setActiveUser(matchingUser);
+                    } else {
+                      const defaultMenus = 
+                        prof === "Supervisão" ? ["dashboard", "calendar", "tracker", "instructors", "commercial", "portal", "courses", "documents", "settings"] :
+                        prof === "PCP" ? ["dashboard", "calendar", "tracker", "instructors", "courses", "documents", "settings"] :
+                        prof === "Comercial" ? ["commercial"] :
+                        prof === "Secretária" ? ["tracker"] :
+                        prof === "Instrutor" ? ["portal"] :
+                        prof === "Faturamento" ? ["tracker"] :
+                        ["portal"];
+
+                      setActiveUser({
+                        id: `usr-${prof.toLowerCase()}`,
+                        username: prof.toLowerCase(),
+                        password: "123",
+                        name: `Usuário ${prof}`,
+                        email: `${prof.toLowerCase()}@sesisc.org.br`,
+                        role: prof,
+                        regional: "Centro-Norte",
+                        unit: "Jaraguá do Sul",
+                        allowedMenus: defaultMenus,
+                        canApproveSpecialDates: prof === "Supervisão",
+                        canManageHolidays: prof === "Supervisão" || prof === "PCP"
+                      });
+                    }
                     logAction(`Perfil alterado para '${prof}'. Telas e permissões adaptadas.`);
                   }}
                   className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer border-none p-0 pr-4"
@@ -511,7 +554,7 @@ export default function App() {
             
             <nav className="space-y-1">
               {/* Menu 1: Dashboard */}
-              {(currentProfile === "Supervisão" || currentProfile === "PCP") && (
+              {currentAllowedMenus.includes("dashboard") && (
                 <button
                   onClick={() => { setActiveMenu("dashboard"); setIsSidebarOpen(false); }}
                   title="Painel Gerencial"
@@ -538,123 +581,139 @@ export default function App() {
               )}
 
               {/* Menu 2: General Agenda */}
-              <button
-                onClick={() => { setActiveMenu("calendar"); setIsSidebarOpen(false); }}
-                title="Agenda"
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "calendar"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <CalendarIcon className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Agenda</span>}
-              </button>
+              {currentAllowedMenus.includes("calendar") && (
+                <button
+                  onClick={() => { setActiveMenu("calendar"); setIsSidebarOpen(false); }}
+                  title="Agenda"
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "calendar"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <CalendarIcon className="w-4 h-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Agenda</span>}
+                </button>
+              )}
 
               {/* Menu 3: Tracker */}
-              <button
-                onClick={() => { setActiveMenu("tracker"); setIsSidebarOpen(false); }}
-                title="Acompanhamento de Fluxo"
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "tracker"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <Layers className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Acompanhamento de Fluxo</span>}
-              </button>
+              {currentAllowedMenus.includes("tracker") && (
+                <button
+                  onClick={() => { setActiveMenu("tracker"); setIsSidebarOpen(false); }}
+                  title="Acompanhamento de Fluxo"
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "tracker"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <Layers className="w-4 h-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Acompanhamento de Fluxo</span>}
+                </button>
+              )}
 
               {/* Menu 4: Instructors */}
-              <button
-                onClick={() => { setActiveMenu("instructors"); setIsSidebarOpen(false); }}
-                title="Instrutores"
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "instructors"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <Users className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Instrutores</span>}
-              </button>
+              {currentAllowedMenus.includes("instructors") && (
+                <button
+                  onClick={() => { setActiveMenu("instructors"); setIsSidebarOpen(false); }}
+                  title="Instrutores"
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "instructors"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <Users className="w-4 h-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Instrutores</span>}
+                </button>
+              )}
 
               {/* Menu 5: Commercial Support */}
-              <button
-                onClick={() => { setActiveMenu("commercial"); setIsSidebarOpen(false); }}
-                title="Apoio ao Comercial"
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "commercial"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <TrendingUp className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Apoio ao Comercial</span>}
-              </button>
+              {currentAllowedMenus.includes("commercial") && (
+                <button
+                  onClick={() => { setActiveMenu("commercial"); setIsSidebarOpen(false); }}
+                  title="Apoio ao Comercial"
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "commercial"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Apoio ao Comercial</span>}
+                </button>
+              )}
 
               {/* Menu 6: Instructor Portal */}
-              <button
-                onClick={() => { setActiveMenu("portal"); setIsSidebarOpen(false); }}
-                title="Portal do Instrutor"
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "portal"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <UserSquare2 className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Portal do Instrutor</span>}
-              </button>
+              {currentAllowedMenus.includes("portal") && (
+                <button
+                  onClick={() => { setActiveMenu("portal"); setIsSidebarOpen(false); }}
+                  title="Portal do Instrutor"
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "portal"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <UserSquare2 className="w-4 h-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Portal do Instrutor</span>}
+                </button>
+              )}
 
               {/* Menu 7: Course Catalog SGN */}
-              <button
-                onClick={() => { setActiveMenu("courses"); setIsSidebarOpen(false); }}
-                title="Catálogo de Cursos SGN"
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "courses"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <BookOpen className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Catálogo de Cursos SGN</span>}
-              </button>
+              {currentAllowedMenus.includes("courses") && (
+                <button
+                  onClick={() => { setActiveMenu("courses"); setIsSidebarOpen(false); }}
+                  title="Catálogo de Cursos SGN"
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "courses"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Catálogo de Cursos SGN</span>}
+                </button>
+              )}
 
               {/* Menu 8: Documents Helper */}
-              <button
-                onClick={() => { setActiveMenu("documents"); setIsSidebarOpen(false); }}
-                title="Documentos de Apoio"
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "documents"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <FileText className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Documentos de Apoio</span>}
-              </button>
+              {currentAllowedMenus.includes("documents") && (
+                <button
+                  onClick={() => { setActiveMenu("documents"); setIsSidebarOpen(false); }}
+                  title="Documentos de Apoio"
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "documents"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <FileText className="w-4 h-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Documentos de Apoio</span>}
+                </button>
+              )}
 
               {/* Menu 9: Settings & Access Control */}
-              <button
-                onClick={() => { setActiveMenu("settings"); setIsSidebarOpen(false); }}
-                title="Configuração & Acesso"
-                className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "justify-between px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  activeMenu === "settings"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Settings className="w-4 h-4 text-emerald-500 shrink-0" />
-                  {!isSidebarCollapsed && <span>Configuração & Acesso</span>}
-                </div>
-                {!isSidebarCollapsed && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    Novo
-                  </span>
-                )}
-              </button>
+              {currentAllowedMenus.includes("settings") && (
+                <button
+                  onClick={() => { setActiveMenu("settings"); setIsSidebarOpen(false); }}
+                  title="Configuração & Acesso"
+                  className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "justify-between px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeMenu === "settings"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-4 h-4 text-emerald-500 shrink-0" />
+                    {!isSidebarCollapsed && <span>Configuração & Acesso</span>}
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      Novo
+                    </span>
+                  )}
+                </button>
+              )}
             </nav>
 
             {/* Audit Log Panel built directly in the sidebar */}
@@ -685,22 +744,8 @@ export default function App() {
         {/* MASTER FRAME PANEL (Main view screen scrollable) */}
         <main className="flex-1 overflow-y-auto pr-2 pb-2">
           
-          {/* PROFILE EXPLANATORY HEADER CHIP */}
-          <div className="mb-6 bg-white p-4.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3.5 text-xs">
-            <span className="w-3 h-3 rounded-full bg-blue-600 animate-pulse shrink-0"></span>
-            <div className="text-slate-600 leading-relaxed">
-              Acesso ativo: <span className="font-extrabold text-[#002e5d]">{currentProfile}</span>. 
-              {currentProfile === "Supervisão" && " Você possui privilégios de administrador total para monitorar todos os fluxos comerciais e operacionais."}
-              {currentProfile === "Comercial" && " Você é responsável pelo funil de vendas (CRM/PS) e consultas rápidas de viabilidade. Passos 1 a 3 no fluxo operacional estão destacados para você."}
-              {currentProfile === "PCP" && " Você gerencia a criação de turmas, alocação de instrutores e materiais. Passos 4, 5, 6 e 8 estão destacados para você."}
-              {currentProfile === "Secretária" && " Você coordena as matrículas físicas e emissão de certificados pós-diário. Passos 7 e 11 estão destacados."}
-              {currentProfile === "Instrutor" && " Você pode visualizar suas turmas alocadas, baixar fichas do curso e lançar frequências e diários de notas. Passos 9 e 10 destacados."}
-              {currentProfile === "Faturamento" && " Você gerencia o faturamento das turmas concluídas. Digite o número do chamado de abertura no Passo 12 destacado."}
-            </div>
-          </div>
-
           {/* Core View Router */}
-          {activeMenu === "dashboard" && (
+          {activeMenu === "dashboard" && currentAllowedMenus.includes("dashboard") && (
             <DashboardView 
               classes={classes} 
               instructors={instructors} 
@@ -710,7 +755,7 @@ export default function App() {
             />
           )}
 
-          {activeMenu === "calendar" && (
+          {activeMenu === "calendar" && currentAllowedMenus.includes("calendar") && (
             <CalendarView 
               classes={classes} 
               courses={courses} 
@@ -718,7 +763,7 @@ export default function App() {
             />
           )}
 
-          {activeMenu === "tracker" && (
+          {activeMenu === "tracker" && currentAllowedMenus.includes("tracker") && (
             <OperationalTrackerView
               classes={classes}
               courses={courses}
@@ -729,7 +774,7 @@ export default function App() {
             />
           )}
 
-          {activeMenu === "instructors" && (
+          {activeMenu === "instructors" && currentAllowedMenus.includes("instructors") && (
             <InstructorScheduleView
               instructors={instructors}
               courses={courses}
@@ -740,7 +785,7 @@ export default function App() {
             />
           )}
 
-          {activeMenu === "commercial" && (
+          {activeMenu === "commercial" && currentAllowedMenus.includes("commercial") && (
             <CommercialSupportView
               opportunities={opportunities}
               courses={courses}
@@ -754,7 +799,7 @@ export default function App() {
             />
           )}
 
-          {activeMenu === "portal" && (
+          {activeMenu === "portal" && currentAllowedMenus.includes("portal") && (
             <InstructorPortalView
               instructors={instructors}
               classes={classes}
@@ -765,7 +810,7 @@ export default function App() {
             />
           )}
 
-          {activeMenu === "courses" && (
+          {activeMenu === "courses" && currentAllowedMenus.includes("courses") && (
             <CourseRegistryView
               courses={courses}
               instructors={instructors}
@@ -776,14 +821,14 @@ export default function App() {
             />
           )}
 
-          {activeMenu === "documents" && (
+          {activeMenu === "documents" && currentAllowedMenus.includes("documents") && (
             <DocumentManagementView
               documents={documents}
               courses={courses}
             />
           )}
 
-          {activeMenu === "settings" && (
+          {activeMenu === "settings" && currentAllowedMenus.includes("settings") && (
             <SettingsView
               holidays={holidays}
               onAddHoliday={handleAddHoliday}

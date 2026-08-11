@@ -9,7 +9,6 @@ import {
   ExternalLink, 
   Download, 
   Search, 
-  Info, 
   CheckSquare, 
   ChevronRight, 
   FileSpreadsheet, 
@@ -67,14 +66,6 @@ export default function DocumentManagementView({ documents, courses }: DocumentM
               {cat}
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* Info banner confirming official storage rule */}
-      <div className="bg-amber-50/50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
-        <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <div className="text-xs text-amber-800 leading-relaxed">
-          <span className="font-bold">Atenção sobre Integridade de Dados:</span> Esta plataforma <span className="font-semibold">não substitui os sistemas corporativos oficiais do SESI</span>. Todos os registros oficiais, como cadastro de turmas, matrículas, diários lançados e certificados continuarão sendo armazenados e validados exclusivamente nos sistemas institucionais já existentes. Estes documentos servem como consulta e agilização operacional diária.
         </div>
       </div>
 
