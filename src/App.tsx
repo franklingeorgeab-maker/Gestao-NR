@@ -41,6 +41,7 @@ import CourseRegistryView from "./components/CourseRegistryView";
 import DocumentManagementView from "./components/DocumentManagementView";
 import SettingsView from "./components/SettingsView";
 import SesiLogo from "./components/SesiLogo";
+import SystemManualModal from "./components/SystemManualModal";
 
 // Icons
 import { 
@@ -64,7 +65,9 @@ import {
   PanelLeft,
   ChevronLeft,
   ChevronRight,
-  Settings
+  Settings,
+  HelpCircle,
+  BookMarked
 } from "lucide-react";
 
 export default function App() {
@@ -94,6 +97,10 @@ export default function App() {
     loadState<ClientCompany[]>("clients", INITIAL_CLIENTS)
   );
 
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(() => 
+    loadState<string | null>("customLogo", null)
+  );
+
   const [activeUser, setActiveUser] = useState<UserAccount>(() => 
     INITIAL_USER_ACCOUNTS[0]
   );
@@ -101,7 +108,10 @@ export default function App() {
   // 2. Navigation State
   const [activeMenu, setActiveMenu] = useState<
     "dashboard" | "calendar" | "instructors" | "commercial" | "tracker" | "portal" | "courses" | "documents" | "settings"
-  >("dashboard");
+  >("calendar");
+
+  // System Manual Modal state
+  const [isManualOpen, setIsManualOpen] = useState(false);
 
   // Sidebar toggle state (mobile drawer & desktop collapse)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -359,6 +369,12 @@ export default function App() {
     logAction(`Empresa '${c?.name || id}' removida do cadastro base.`);
   };
 
+  const handleUpdateCustomLogo = (logoUrl: string | null) => {
+    setCustomLogoUrl(logoUrl);
+    saveState("customLogo", logoUrl);
+    logAction(logoUrl ? "Logo personalizada configurada no sistema." : "Logo padrão SESI restaurada.");
+  };
+
   // Reset demo data to initial
   const handleResetDemoData = () => {
     if (confirm("Deseja redefinir os dados para os valores originais de demonstração? Suas alterações salvas localmente serão limpas.")) {
@@ -392,9 +408,9 @@ export default function App() {
               {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            {/* Official SESI Logo Badge */}
-            <div className="bg-white px-3 py-1.5 rounded-xl shadow-xs border border-blue-200/60 flex items-center justify-center shrink-0">
-              <SesiLogo className="h-6 sm:h-7" variant="color" />
+            {/* Official SESI Logo Badge with Gray Background */}
+            <div className="bg-slate-200 px-3 py-1.5 rounded-xl shadow-xs border border-slate-300 flex items-center justify-center shrink-0">
+              <SesiLogo className="h-6 sm:h-7" variant="color" customLogoUrl={customLogoUrl} />
             </div>
 
             <div>
@@ -406,8 +422,19 @@ export default function App() {
           </div>
         </div>
 
-        {/* PROFILE SWITCHER BAR */}
-        <div className="flex items-center gap-2.5 sm:gap-3 w-full md:w-auto justify-end">
+        {/* PROFILE SWITCHER BAR & MANUAL BUTTON */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full md:w-auto justify-end">
+          
+          {/* System Manual Trigger Button */}
+          <button
+            onClick={() => setIsManualOpen(true)}
+            className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer border border-amber-300 shrink-0"
+            title="Abrir Manual do Sistema & Especificações de Tecnologia"
+          >
+            <BookMarked className="w-4 h-4 text-slate-950" />
+            <span className="hidden sm:inline">Manual do Sistema</span>
+          </button>
+
           <div className="bg-blue-950/60 px-3.5 py-1.5 sm:py-2 rounded-xl border border-blue-400/30 flex items-center gap-2.5">
             <UserSquare2 className="w-4 h-4 text-blue-300 shrink-0" />
             <div className="leading-tight">
@@ -510,10 +537,10 @@ export default function App() {
                 </button>
               )}
 
-              {/* Menu 2: General Calendar */}
+              {/* Menu 2: General Agenda */}
               <button
                 onClick={() => { setActiveMenu("calendar"); setIsSidebarOpen(false); }}
-                title="Calendário de Cursos"
+                title="Agenda"
                 className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
                   activeMenu === "calendar"
                     ? "bg-slate-900 text-white shadow-sm"
@@ -521,7 +548,7 @@ export default function App() {
                 }`}
               >
                 <CalendarIcon className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Calendário de Cursos</span>}
+                {!isSidebarCollapsed && <span>Agenda</span>}
               </button>
 
               {/* Menu 3: Tracker */}
@@ -541,7 +568,7 @@ export default function App() {
               {/* Menu 4: Instructors */}
               <button
                 onClick={() => { setActiveMenu("instructors"); setIsSidebarOpen(false); }}
-                title="Agendas & Instrutores"
+                title="Instrutores"
                 className={`w-full flex items-center ${isSidebarCollapsed ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-xs font-bold transition-all ${
                   activeMenu === "instructors"
                     ? "bg-slate-900 text-white shadow-sm"
@@ -549,7 +576,7 @@ export default function App() {
                 }`}
               >
                 <Users className="w-4 h-4 shrink-0" />
-                {!isSidebarCollapsed && <span>Agendas & Instrutores</span>}
+                {!isSidebarCollapsed && <span>Instrutores</span>}
               </button>
 
               {/* Menu 5: Commercial Support */}
@@ -772,11 +799,19 @@ export default function App() {
               onDeleteClient={handleDeleteClient}
               activeUser={activeUser}
               onSwitchUser={handleSwitchUser}
+              customLogoUrl={customLogoUrl}
+              onUpdateCustomLogo={handleUpdateCustomLogo}
             />
           )}
 
         </main>
       </div>
+
+      {/* System Manual Modal Documentation */}
+      <SystemManualModal 
+        isOpen={isManualOpen} 
+        onClose={() => setIsManualOpen(false)} 
+      />
     </div>
   );
 }

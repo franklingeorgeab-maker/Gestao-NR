@@ -20,7 +20,10 @@ import {
   Save,
   Check,
   Lock,
-  ShieldAlert
+  ShieldAlert,
+  Brain,
+  Filter,
+  Sparkles
 } from "lucide-react";
 import { CRMOpportunity, Course, Instructor, CourseClass, Regional, ClientCompany, SystemHoliday } from "../types";
 
@@ -47,15 +50,14 @@ export default function CommercialSupportView({
   onUpdateOpportunity,
   onPromoteOpportunity
 }: CommercialSupportViewProps) {
-  // Tabs: "oportunidades", "busca_cliente" or "consulta"
-  const [activeTab, setActiveTab] = useState<"oportunidades" | "busca_cliente" | "consulta">("oportunidades");
+  // Tabs: "oportunidades", "filtro_inteligente" or "nova_oportunidade"
+  const [activeTab, setActiveTab] = useState<"oportunidades" | "filtro_inteligente" | "nova_oportunidade">("oportunidades");
 
   // Client Unified Search State
   const [clientQuery, setClientQuery] = useState("");
   const [selectedClient, setSelectedClient] = useState<ClientCompany | null>(null);
 
   // CRM Opp form state
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingOpp, setEditingOpp] = useState<CRMOpportunity | null>(null);
 
   // Form Fields
@@ -459,7 +461,8 @@ export default function CommercialSupportView({
     } else {
       onAddOpportunity(oppData);
     }
-    setIsFormOpen(false);
+    setEditingOpp(null);
+    setActiveTab("oportunidades");
   };
 
   const handleOpenOppForm = (opp?: CRMOpportunity) => {
@@ -488,73 +491,427 @@ export default function CommercialSupportView({
       setFormStatus("Negociação");
       setFormObs("");
     }
-    setIsFormOpen(true);
+    setActiveTab("nova_oportunidade");
   };
 
   return (
     <div className="space-y-6">
-      {/* Clean Streamlined Header with Integrated Search & Quick Consultation Tabs */}
+      {/* Header Bar with 3 Main Tabs */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Apoio ao Comercial</h2>
+            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-blue-600" />
+              Apoio ao Comercial
+            </h2>
+            <p className="text-xs text-slate-500">
+              Gestão de propostas comerciais, filtro inteligente de negociação de datas e acompanhamento de clientes.
+            </p>
           </div>
+        </div>
 
-          <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200/80 self-start md:self-auto">
-            <button
-              onClick={() => setActiveTab("busca_cliente")}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === "busca_cliente"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-white"
-              }`}
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span>Busca de Cliente / CNPJ</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("consulta")}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === "consulta"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-white"
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Consulta Rápida</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("oportunidades")}
-              className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === "oportunidades"
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "text-slate-600 hover:bg-white"
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Oportunidades CRM</span>
-            </button>
-          </div>
+        {/* THREE MAIN TABS */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+          {/* Tab 1: Listagem das Oportunidades */}
+          <button
+            onClick={() => setActiveTab("oportunidades")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
+              activeTab === "oportunidades"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Listagem das Oportunidades</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              activeTab === "oportunidades" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+            }`}>
+              {opportunities.length}
+            </span>
+          </button>
+
+          {/* Tab 2: Filtro Inteligente (Ícone de Cérebro 🧠) */}
+          <button
+            onClick={() => setActiveTab("filtro_inteligente")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
+              activeTab === "filtro_inteligente"
+                ? "bg-amber-500 text-slate-950 shadow-xs"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            <Brain className="w-4.5 h-4.5 text-slate-950" />
+            <span>Filtro Inteligente</span>
+          </button>
+
+          {/* Tab 3: Nova Oportunidade */}
+          <button
+            onClick={() => {
+              handleOpenOppForm();
+              setActiveTab("nova_oportunidade");
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
+              activeTab === "nova_oportunidade"
+                ? "bg-slate-900 text-white shadow-xs"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Oportunidade</span>
+          </button>
         </div>
       </div>
 
-      {/* Opportunities Tab */}
+      {/* ABA 1: LISTAGEM DAS OPORTUNIDADES */}
       {activeTab === "oportunidades" && (
-        <div className="space-y-4">
-          
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-700">Oportunidades Comerciais Ativas</h3>
+        <div className="space-y-6">
+          {/* Caixa de Texto em que pesquisa pelo nome da empresa */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-blue-600 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={clientQuery}
+                onChange={(e) => {
+                  setClientQuery(e.target.value);
+                  if (selectedClient && !e.target.value.toLowerCase().includes(selectedClient.name.toLowerCase())) {
+                    setSelectedClient(null);
+                  }
+                }}
+                placeholder="Pesquisar por nome da empresa ou código CRM / PS..."
+                className="w-full pl-10 pr-8 py-2.5 bg-slate-50 hover:bg-white focus:bg-white border-2 border-slate-200 focus:border-blue-600 rounded-xl text-xs font-extrabold text-slate-900 focus:outline-none transition-all"
+              />
+              {clientQuery && (
+                <button
+                  onClick={() => {
+                    setClientQuery("");
+                    setSelectedClient(null);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <button
-              onClick={() => handleOpenOppForm()}
-              className="flex items-center gap-1.5 px-4.5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-xs"
+              onClick={() => {
+                handleOpenOppForm();
+                setActiveTab("nova_oportunidade");
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer w-full sm:w-auto justify-center"
             >
               <Plus className="w-4 h-4" />
-              Nova Oportunidade
+              <span>Nova Oportunidade</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {opportunities.map(opp => {
+          {/* PESQUISA INTELIGENTE CLIENTE 360º RESULTS */}
+          {(() => {
+        const queryLower = clientQuery.trim().toLowerCase();
+        const matchingClients = (clients || []).filter(c => 
+          c.name.toLowerCase().includes(queryLower) ||
+          c.cnpj.replace(/\D/g, "").includes(queryLower.replace(/\D/g, "")) ||
+          c.cnpj.includes(queryLower) ||
+          c.contactName.toLowerCase().includes(queryLower)
+        );
+
+        const targetClient = selectedClient || (queryLower !== "" ? matchingClients[0] : null);
+
+        if (!targetClient && queryLower === "") return null;
+
+        // Filtered opportunities for this client or query
+        const clientOpps = targetClient ? opportunities.filter(o => 
+          o.clientName.toLowerCase().includes(targetClient.name.toLowerCase()) ||
+          targetClient.name.toLowerCase().includes(o.clientName.toLowerCase())
+        ) : opportunities.filter(o =>
+          o.clientName.toLowerCase().includes(queryLower) ||
+          o.crmNumber.toLowerCase().includes(queryLower) ||
+          o.psNumber.toLowerCase().includes(queryLower)
+        );
+
+        // Active classes
+        const activeClasses = targetClient ? classes.filter(c => 
+          c.clientName && (
+            c.clientName.toLowerCase().includes(targetClient.name.toLowerCase()) ||
+            targetClient.name.toLowerCase().includes(c.clientName.toLowerCase())
+          ) && (c.status === "Pendente" || c.status === "Confirmada" || c.status === "Em Andamento")
+        ) : [];
+
+        // Completed classes
+        const completedClasses = targetClient ? classes.filter(c => 
+          c.clientName && (
+            c.clientName.toLowerCase().includes(targetClient.name.toLowerCase()) ||
+            targetClient.name.toLowerCase().includes(c.clientName.toLowerCase())
+          ) && (c.status === "Realizada" || c.status === "Faturada")
+        ) : [];
+
+        if (targetClient) {
+          return (
+            <div className="space-y-6 bg-slate-50/50 p-4 rounded-2xl border border-blue-100">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-xs font-extrabold flex items-center gap-1.5">
+                  <Search className="w-3.5 h-3.5" />
+                  Resultado da Pesquisa Inteligente 360º
+                </span>
+                <button
+                  onClick={() => {
+                    setSelectedClient(null);
+                    setClientQuery("");
+                  }}
+                  className="text-xs text-slate-500 hover:text-slate-800 font-bold underline cursor-pointer"
+                >
+                  Fechar Painel do Cliente
+                </button>
+              </div>
+
+              {/* Target Client Detailed Ficha 360 */}
+              <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-sm space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-md uppercase">
+                        Cliente Corporativo
+                      </span>
+                      <span className="text-xs text-slate-400 font-mono font-bold">
+                        CNPJ: {targetClient.cnpj}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-black text-white mt-1">{targetClient.name}</h3>
+                    <p className="text-xs text-slate-300 flex items-center gap-2 mt-0.5">
+                      <User className="w-3.5 h-3.5 text-blue-400" /> Responsável SST/RH: <strong className="text-white">{targetClient.contactName}</strong>
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setFormClient(targetClient.name);
+                      setFormRegional(targetClient.regional);
+                      handleOpenOppForm();
+                    }}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl transition-all shadow-sm flex items-center gap-1.5 self-start md:self-auto cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Nova Proposta CRM para este Cliente</span>
+                  </button>
+                </div>
+
+                {/* Contact Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                  <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">E-mail de Contato</p>
+                    <p className="font-bold text-white mt-0.5 truncate">{targetClient.email}</p>
+                  </div>
+
+                  <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Telefone / WhatsApp</p>
+                    <p className="font-bold text-white mt-0.5">{targetClient.phone}</p>
+                  </div>
+
+                  <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Regional & Cidade</p>
+                    <p className="font-bold text-white mt-0.5">{targetClient.city} ({targetClient.regional})</p>
+                  </div>
+
+                  <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Observações Comerciais</p>
+                    <p className="font-medium text-slate-300 mt-0.5 text-[11px] truncate">{targetClient.notes || "Sem observações"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1. Cursos Oferecidos (Propostas CRM) */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                    1. Cursos Oferecidos & Propostas em Negociação ({clientOpps.length})
+                  </h4>
+                </div>
+
+                {clientOpps.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {clientOpps.map(opp => {
+                      const course = courses.find(c => c.id === opp.courseId);
+                      return (
+                        <div key={opp.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <span className="text-[10px] font-mono font-bold text-slate-400">{opp.crmNumber} | {opp.psNumber}</span>
+                              <h5 className="font-extrabold text-slate-900 text-xs mt-0.5">{course?.name || opp.courseId}</h5>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                              opp.status === "Aprovado" ? "bg-emerald-100 text-emerald-800" :
+                              opp.status === "Negociação" ? "bg-amber-100 text-amber-800" :
+                              "bg-rose-100 text-rose-800"
+                            }`}>
+                              {opp.status}
+                            </span>
+                          </div>
+
+                          <div className="text-[11px] text-slate-600 space-y-1">
+                            <p><strong>Data Pretendida:</strong> {opp.desiredDate} ({opp.period})</p>
+                            <p><strong>Participantes:</strong> {opp.participants} alunos</p>
+                            <p><strong>Valor Estimado:</strong> R$ {(opp.participants * 250).toLocaleString("pt-BR")}</p>
+                          </div>
+
+                          {opp.status === "Aprovado" && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Promover esta proposta comercial aprovada para rascunho de turma no PCP?`)) {
+                                  onPromoteOpportunity(opp);
+                                }
+                              }}
+                              className="w-full py-1.5 bg-emerald-600 text-white font-extrabold text-xs rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> Enviar para PCP Operacional
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+                    Nenhuma proposta de curso registrada no funil comercial para esta empresa até o momento.
+                  </p>
+                )}
+              </div>
+
+              {/* 2. Cursos Ativos / Agendados */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-emerald-600" />
+                    2. Cursos Ativos & Agendados ({activeClasses.length})
+                  </h4>
+                </div>
+
+                {activeClasses.length > 0 ? (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-left text-xs text-slate-700">
+                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-2.5">Código Turma</th>
+                          <th className="px-4 py-2.5">Curso</th>
+                          <th className="px-4 py-2.5">Período / Datas</th>
+                          <th className="px-4 py-2.5">Cidade</th>
+                          <th className="px-4 py-2.5">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {activeClasses.map(cls => {
+                          const course = courses.find(c => c.id === cls.courseId);
+                          return (
+                            <tr key={cls.id} className="hover:bg-slate-50">
+                              <td className="px-4 py-3 font-mono font-bold text-slate-900">{cls.id}</td>
+                              <td className="px-4 py-3 font-bold text-slate-800">{course?.name || cls.courseId}</td>
+                              <td className="px-4 py-3 font-medium text-slate-700">{cls.startDate} a {cls.endDate} ({cls.period})</td>
+                              <td className="px-4 py-3 text-slate-600">{cls.city}</td>
+                              <td className="px-4 py-3">
+                                <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full font-extrabold text-[10px] uppercase">
+                                  {cls.status}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+                    Nenhuma turma ativa ou agendada no momento para esta empresa.
+                  </p>
+                )}
+              </div>
+
+              {/* 3. Cursos Já Concluídos / Histórico */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-600" />
+                    3. Cursos Já Concluídos & Faturados ({completedClasses.length})
+                  </h4>
+                </div>
+
+                {completedClasses.length > 0 ? (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-left text-xs text-slate-700">
+                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-2.5">Código Turma</th>
+                          <th className="px-4 py-2.5">Curso Realizado</th>
+                          <th className="px-4 py-2.5">Data Conclusão</th>
+                          <th className="px-4 py-2.5">Chamado / Faturamento</th>
+                          <th className="px-4 py-2.5">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {completedClasses.map(cls => {
+                          const course = courses.find(c => c.id === cls.courseId);
+                          return (
+                            <tr key={cls.id} className="hover:bg-slate-50">
+                              <td className="px-4 py-3 font-mono font-bold text-slate-900">{cls.id}</td>
+                              <td className="px-4 py-3 font-bold text-slate-800">{course?.name || cls.courseId}</td>
+                              <td className="px-4 py-3 font-medium text-slate-700">{cls.endDate}</td>
+                              <td className="px-4 py-3 font-mono text-slate-600">{cls.billingCallNumber || "CHM-88421"}</td>
+                              <td className="px-4 py-3">
+                                <span className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-full font-extrabold text-[10px] uppercase">
+                                  Concluída / Faturada
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+                    Nenhum histórico de curso concluído anteriormente para esta empresa.
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        } else if (queryLower !== "") {
+          return (
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs">
+              Nenhum cliente ou CNPJ encontrado para &ldquo;<strong>{clientQuery}</strong>&rdquo;. Tente pesquisar por outro termo.
+            </div>
+          );
+        }
+        return null;
+      })()}
+
+      {/* OPORTUNIDADES CRM ATIVAS (FUNIL COMERCIAL) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-blue-600" />
+            Oportunidades Comerciais CRM Ativas
+          </h3>
+          <button
+            onClick={() => handleOpenOppForm()}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Oportunidade
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {opportunities
+            .filter(opp => {
+              if (!clientQuery) return true;
+              const q = clientQuery.toLowerCase();
+              return (
+                opp.clientName.toLowerCase().includes(q) ||
+                opp.crmNumber.toLowerCase().includes(q) ||
+                opp.psNumber.toLowerCase().includes(q)
+              );
+            })
+            .map(opp => {
               const course = courses.find(c => c.id === opp.courseId);
               return (
                 <div key={opp.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4">
@@ -614,7 +971,7 @@ export default function CommercialSupportView({
                   <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                     <button
                       onClick={() => handleOpenOppForm(opp)}
-                      className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline cursor-pointer"
                     >
                       Editar Dados
                     </button>
@@ -626,7 +983,7 @@ export default function CommercialSupportView({
                             onPromoteOpportunity(opp);
                           }
                         }}
-                        className="flex items-center gap-1 text-[10px] bg-emerald-600 text-white font-semibold px-2 py-1 rounded hover:bg-emerald-700 transition-colors shadow-xs"
+                        className="flex items-center gap-1 text-[10px] bg-emerald-600 text-white font-semibold px-2 py-1 rounded hover:bg-emerald-700 transition-colors shadow-xs cursor-pointer"
                       >
                         <Plus className="w-3 h-3" />
                         Criar Pré-Turma
@@ -636,323 +993,34 @@ export default function CommercialSupportView({
                 </div>
               );
             })}
-          </div>
-
         </div>
-      )}
+      </div>
+    </div>
+  )}
 
-      {/* Unified Client / CNPJ Search Tab */}
-      {activeTab === "busca_cliente" && (() => {
-        const matchingClients = (clients || []).filter(c => 
-          c.name.toLowerCase().includes(clientQuery.toLowerCase()) ||
-          c.cnpj.replace(/\D/g, "").includes(clientQuery.replace(/\D/g, "")) ||
-          c.cnpj.includes(clientQuery) ||
-          c.contactName.toLowerCase().includes(clientQuery.toLowerCase())
-        );
-
-        const targetClient = selectedClient || (clientQuery.trim() !== "" ? matchingClients[0] : (clients[0] || null));
-
-        // Filtered opportunities for this client
-        const clientOpps = targetClient ? opportunities.filter(o => 
-          o.clientName.toLowerCase().includes(targetClient.name.toLowerCase()) ||
-          targetClient.name.toLowerCase().includes(o.clientName.toLowerCase())
-        ) : [];
-
-        // Filtered active classes for this client
-        const activeClasses = targetClient ? classes.filter(c => 
-          c.clientName && (
-            c.clientName.toLowerCase().includes(targetClient.name.toLowerCase()) ||
-            targetClient.name.toLowerCase().includes(c.clientName.toLowerCase())
-          ) && (c.status === "Pendente" || c.status === "Confirmada" || c.status === "Em Andamento")
-        ) : [];
-
-        // Filtered completed classes for this client
-        const completedClasses = targetClient ? classes.filter(c => 
-          c.clientName && (
-            c.clientName.toLowerCase().includes(targetClient.name.toLowerCase()) ||
-            targetClient.name.toLowerCase().includes(c.clientName.toLowerCase())
-          ) && (c.status === "Realizada" || c.status === "Faturada")
-        ) : [];
-
-        return (
-          <div className="space-y-6">
-            
-            {/* Search Box Card */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-blue-600" />
-                  Pesquisa por Nome ou CNPJ
+      {/* ABA 2: FILTRO INTELIGENTE (ÍCONE DE CÉREBRO 🧠) */}
+      {activeTab === "filtro_inteligente" && (
+        <div className="space-y-6">
+          {/* Header Banner do Filtro Inteligente */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 rounded-2xl text-white border border-slate-800 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-xs">
+                <Brain className="w-7 h-7 text-slate-950" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  Filtro Inteligente & Simulador de Negociação de Datas
                 </h3>
+                <p className="text-xs text-slate-300">
+                  Pesquisa cruzada de empresas, simulação de datas com validação de feriados, domingos e instrutores habilitados na regional.
+                </p>
               </div>
-
-              {/* Search Input */}
-              <div className="relative">
-                <Search className="w-5 h-5 text-slate-400 absolute left-4 top-3.5" />
-                <input
-                  type="text"
-                  placeholder="Pesquisar por Nome ou CNPJ (ex: WEG, Aurora, Bunge, 84.429.695/0001-11)..."
-                  value={clientQuery}
-                  onChange={(e) => {
-                    setClientQuery(e.target.value);
-                    setSelectedClient(null);
-                  }}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-extrabold text-slate-900 focus:outline-none focus:border-blue-500 shadow-xs"
-                />
-              </div>
-
-              {/* Quick Select Client Pills */}
-              {clients.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase">Clientes Cadastrados:</span>
-                  {clients.map(c => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        setSelectedClient(c);
-                        setClientQuery(c.name);
-                      }}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                        targetClient?.id === c.id
-                          ? "bg-blue-600 text-white shadow-xs"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                      }`}
-                    >
-                      {c.name.split(" ")[0]}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
-
-            {/* Target Client Detailed Ficha 360 */}
-            {targetClient ? (
-              <div className="space-y-6">
-                
-                {/* 1. Client Contact Header */}
-                <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-sm space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-md uppercase">
-                          Cliente Corporativo
-                        </span>
-                        <span className="text-xs text-slate-400 font-mono font-bold">
-                          CNPJ: {targetClient.cnpj}
-                        </span>
-                      </div>
-                      <h3 className="text-xl font-black text-white mt-1">{targetClient.name}</h3>
-                      <p className="text-xs text-slate-300 flex items-center gap-2 mt-0.5">
-                        <User className="w-3.5 h-3.5 text-blue-400" /> Responsável SST/RH: <strong className="text-white">{targetClient.contactName}</strong>
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setFormClient(targetClient.name);
-                        setFormRegional(targetClient.regional);
-                        setActiveTab("oportunidades");
-                        handleOpenOppForm();
-                      }}
-                      className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl transition-all shadow-sm flex items-center gap-1.5 self-start md:self-auto"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Nova Proposta CRM para este Cliente</span>
-                    </button>
-                  </div>
-
-                  {/* Contact Info Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                    <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">E-mail de Contato</p>
-                      <p className="font-bold text-white mt-0.5 truncate">{targetClient.email}</p>
-                    </div>
-
-                    <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Telefone / WhatsApp</p>
-                      <p className="font-bold text-white mt-0.5">{targetClient.phone}</p>
-                    </div>
-
-                    <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Regional & Cidade</p>
-                      <p className="font-bold text-white mt-0.5">{targetClient.city} ({targetClient.regional})</p>
-                    </div>
-
-                    <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Observações Comerciais</p>
-                      <p className="font-medium text-slate-300 mt-0.5 text-[11px] truncate">{targetClient.notes || "Sem observações"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Cursos Oferecidos (Propostas CRM) */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-blue-600" />
-                      1. Cursos Oferecidos & Propostas em Negociação ({clientOpps.length})
-                    </h4>
-                  </div>
-
-                  {clientOpps.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {clientOpps.map(opp => {
-                        const course = courses.find(c => c.id === opp.courseId);
-                        return (
-                          <div key={opp.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <span className="text-[10px] font-mono font-bold text-slate-400">{opp.crmNumber} | {opp.psNumber}</span>
-                                <h5 className="font-extrabold text-slate-900 text-xs mt-0.5">{course?.name || opp.courseId}</h5>
-                              </div>
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                                opp.status === "Aprovado" ? "bg-emerald-100 text-emerald-800" :
-                                opp.status === "Negociação" ? "bg-amber-100 text-amber-800" :
-                                "bg-rose-100 text-rose-800"
-                              }`}>
-                                {opp.status}
-                              </span>
-                            </div>
-
-                            <div className="text-[11px] text-slate-600 space-y-1">
-                              <p><strong>Data Pretendida:</strong> {opp.desiredDate} ({opp.period})</p>
-                              <p><strong>Participantes:</strong> {opp.participants} alunos</p>
-                              <p><strong>Valor Estimado:</strong> R$ {(opp.participants * 250).toLocaleString("pt-BR")}</p>
-                            </div>
-
-                            {opp.status === "Aprovado" && (
-                              <button
-                                onClick={() => {
-                                  if (confirm(`Promover esta proposta comercial aprovada para rascunho de turma no PCP?`)) {
-                                    onPromoteOpportunity(opp);
-                                  }
-                                }}
-                                className="w-full py-1.5 bg-emerald-600 text-white font-extrabold text-xs rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
-                              >
-                                <Plus className="w-3.5 h-3.5" /> Enviar para PCP Operacional
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-200/60">
-                      Nenhuma proposta de curso registrada no funil comercial para esta empresa até o momento.
-                    </p>
-                  )}
-                </div>
-
-                {/* 3. Cursos Ativos / Agendados */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-emerald-600" />
-                      2. Cursos Ativos & Agendados ({activeClasses.length})
-                    </h4>
-                  </div>
-
-                  {activeClasses.length > 0 ? (
-                    <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                      <table className="w-full text-left text-xs text-slate-700">
-                        <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
-                          <tr>
-                            <th className="px-4 py-2.5">Código Turma</th>
-                            <th className="px-4 py-2.5">Curso</th>
-                            <th className="px-4 py-2.5">Período / Datas</th>
-                            <th className="px-4 py-2.5">Cidade</th>
-                            <th className="px-4 py-2.5">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {activeClasses.map(cls => {
-                            const course = courses.find(c => c.id === cls.courseId);
-                            return (
-                              <tr key={cls.id} className="hover:bg-slate-50">
-                                <td className="px-4 py-3 font-mono font-bold text-slate-900">{cls.id}</td>
-                                <td className="px-4 py-3 font-bold text-slate-800">{course?.name || cls.courseId}</td>
-                                <td className="px-4 py-3 font-medium text-slate-700">{cls.startDate} a {cls.endDate} ({cls.period})</td>
-                                <td className="px-4 py-3 text-slate-600">{cls.city}</td>
-                                <td className="px-4 py-3">
-                                  <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full font-extrabold text-[10px] uppercase">
-                                    {cls.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-200/60">
-                      Nenhuma turma ativa ou agendada no momento para esta empresa.
-                    </p>
-                  )}
-                </div>
-
-                {/* 4. Cursos Já Concluídos / Histórico */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                      3. Cursos Já Concluídos & Faturados ({completedClasses.length})
-                    </h4>
-                  </div>
-
-                  {completedClasses.length > 0 ? (
-                    <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                      <table className="w-full text-left text-xs text-slate-700">
-                        <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
-                          <tr>
-                            <th className="px-4 py-2.5">Código Turma</th>
-                            <th className="px-4 py-2.5">Curso Realizado</th>
-                            <th className="px-4 py-2.5">Data Conclusão</th>
-                            <th className="px-4 py-2.5">Chamado / Faturamento</th>
-                            <th className="px-4 py-2.5">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {completedClasses.map(cls => {
-                            const course = courses.find(c => c.id === cls.courseId);
-                            return (
-                              <tr key={cls.id} className="hover:bg-slate-50">
-                                <td className="px-4 py-3 font-mono font-bold text-slate-900">{cls.id}</td>
-                                <td className="px-4 py-3 font-bold text-slate-800">{course?.name || cls.courseId}</td>
-                                <td className="px-4 py-3 font-medium text-slate-700">{cls.endDate}</td>
-                                <td className="px-4 py-3 font-mono text-slate-600">{cls.billingCallNumber || "CHM-88421"}</td>
-                                <td className="px-4 py-3">
-                                  <span className="px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-full font-extrabold text-[10px] uppercase">
-                                    Concluída / Faturada
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-200/60">
-                      Nenhum histórico de curso concluído anteriormente para esta empresa.
-                    </p>
-                  )}
-                </div>
-
-              </div>
-            ) : (
-              <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs">
-                Selecione ou digite um cliente/CNPJ acima para carregar o Painel 360º.
-              </div>
-            )}
-
           </div>
-        );
-      })()}
 
-      {/* Availability Query Tab */}
-      {activeTab === "consulta" && queryResult && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* SIMULADOR DE DISPONIBILIDADE E CONSULTA RÁPIDA */}
+          {queryResult && (
+            <div id="simulador-negociacao" className="grid grid-cols-1 lg:grid-cols-3 gap-6 scroll-mt-6">
           
           {/* Query Settings Card */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 self-start">
@@ -1379,185 +1447,190 @@ export default function CommercialSupportView({
             </div>
 
           </div>
-
         </div>
       )}
+    </div>
+  )}
 
-      {/* CRM Opportunity Form Modal */}
-      {isFormOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in-50 duration-200">
-          <div className="bg-white rounded-xl shadow-lg border border-slate-200 w-full max-w-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 text-sm">
+      {/* ABA 3: NOVA OPORTUNIDADE (TELA DEDICADA SEM MODAL) */}
+      {activeTab === "nova_oportunidade" && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
+                <Plus className="w-5 h-5 text-blue-600" />
                 {editingOpp ? "Editar Oportunidade Comercial" : "Nova Oportunidade CRM / PS"}
               </h3>
-              <button 
-                onClick={() => setIsFormOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg font-bold"
-              >
-                &times;
-              </button>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Preencha os dados da proposta comercial para registro no CRM.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveTab("oportunidades")}
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+            >
+              ← Voltar para Listagem
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveOpp} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {/* CRM Number */}
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Código N° CRM *</label>
+                <input
+                  type="text"
+                  required
+                  value={formCrm}
+                  onChange={(e) => setFormCrm(e.target.value)}
+                  placeholder="Ex: CRM-2026-1502"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                />
+              </div>
+
+              {/* PS Number */}
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">N° Proposta de Serviço (PS) *</label>
+                <input
+                  type="text"
+                  required
+                  value={formPs}
+                  onChange={(e) => setFormPs(e.target.value)}
+                  placeholder="Ex: PS-2026-894"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                />
+              </div>
+
+              {/* Client Name */}
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Razão Social do Cliente (PJ) *</label>
+                <input
+                  type="text"
+                  required
+                  value={formClient}
+                  onChange={(e) => setFormClient(e.target.value)}
+                  placeholder="Ex: WEG Equipamentos S/A"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                />
+              </div>
+
+              {/* Course Selection */}
+              <div className="md:col-span-2 space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Treinamento Solicitado *</label>
+                <select
+                  value={formCourseId}
+                  onChange={(e) => setFormCourseId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                >
+                  <option value="">Selecione o curso...</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.id}>
+                      {course.name} ({course.duration}h)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Regional */}
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Regional de Atendimento</label>
+                <select
+                  value={formRegional}
+                  onChange={(e) => setFormRegional(e.target.value as any)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                >
+                  <option value="Oeste">Oeste</option>
+                  <option value="Serrana">Serrana</option>
+                  <option value="Norte">Norte</option>
+                  <option value="Litoral">Litoral</option>
+                  <option value="Vale do Itajaí">Vale do Itajaí</option>
+                  <option value="Centro-Norte">Centro-Norte</option>
+                  <option value="Sul">Sul</option>
+                  <option value="Sudeste">Sudeste</option>
+                </select>
+              </div>
+
+              {/* Desired Date */}
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Previsão de Data</label>
+                <input
+                  type="date"
+                  value={formDate}
+                  onChange={(e) => setFormDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                />
+              </div>
+
+              {/* Period */}
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Período</label>
+                <select
+                  value={formPeriod}
+                  onChange={(e) => setFormPeriod(e.target.value as any)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                >
+                  <option value="Matutino">Matutino</option>
+                  <option value="Vespertino">Vespertino</option>
+                  <option value="Noturno">Noturno</option>
+                  <option value="Integral">Integral</option>
+                </select>
+              </div>
+
+              {/* Participants */}
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Alunos Estimados</label>
+                <input
+                  type="number"
+                  value={formParticipants}
+                  onChange={(e) => setFormParticipants(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                />
+              </div>
+
+              {/* Status */}
+              <div className="space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Status Comercial</label>
+                <select
+                  value={formStatus}
+                  onChange={(e) => setFormStatus(e.target.value as any)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900"
+                >
+                  <option value="Negociação">Em Negociação</option>
+                  <option value="Aprovado">Aprovado (Venda Fechada)</option>
+                  <option value="Perdido">Perdido</option>
+                </select>
+              </div>
+
+              {/* Obs */}
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 space-y-1.5 text-xs">
+                <label className="font-bold text-slate-700">Notas Comerciais</label>
+                <textarea
+                  value={formObs}
+                  onChange={(e) => setFormObs(e.target.value)}
+                  placeholder="Informações adicionais da negociação ou necessidades específicas do cliente..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900 resize-none text-xs"
+                />
+              </div>
             </div>
 
-            <form onSubmit={handleSaveOpp} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {/* CRM Number */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Código N° CRM *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formCrm}
-                    onChange={(e) => setFormCrm(e.target.value)}
-                    placeholder="Ex: CRM-2026-1502"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {/* PS Number */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">N° Proposta de Serviço (PS) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formPs}
-                    onChange={(e) => setFormPs(e.target.value)}
-                    placeholder="Ex: PS-2026-894"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {/* Client Name */}
-                <div className="col-span-2 space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Razão Social do Cliente (PJ) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formClient}
-                    onChange={(e) => setFormClient(e.target.value)}
-                    placeholder="Ex: WEG Equipamentos S/A"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {/* Course Selection */}
-                <div className="col-span-2 space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Treinamento Solicitado *</label>
-                  <select
-                    value={formCourseId}
-                    onChange={(e) => setFormCourseId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="">Selecione o curso...</option>
-                    {courses.map(course => (
-                      <option key={course.id} value={course.id}>
-                        {course.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Regional */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Regional de Atendimento</label>
-                  <select
-                    value={formRegional}
-                    onChange={(e) => setFormRegional(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="Oeste">Oeste</option>
-                    <option value="Serrana">Serrana</option>
-                    <option value="Norte">Norte</option>
-                    <option value="Litoral">Litoral</option>
-                    <option value="Vale do Itajaí">Vale do Itajaí</option>
-                    <option value="Centro-Norte">Centro-Norte</option>
-                    <option value="Sul">Sul</option>
-                    <option value="Sudeste">Sudeste</option>
-                  </select>
-                </div>
-
-                {/* Desired Date */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Previsão de Data</label>
-                  <input
-                    type="date"
-                    value={formDate}
-                    onChange={(e) => setFormDate(e.target.value)}
-                    className="w-full px-2 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {/* Period */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Período</label>
-                  <select
-                    value={formPeriod}
-                    onChange={(e) => setFormPeriod(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="Matutino">Matutino</option>
-                    <option value="Vespertino">Vespertino</option>
-                    <option value="Noturno">Noturno</option>
-                    <option value="Integral">Integral</option>
-                  </select>
-                </div>
-
-                {/* Participants */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Alunos Estimados</label>
-                  <input
-                    type="number"
-                    value={formParticipants}
-                    onChange={(e) => setFormParticipants(Number(e.target.value))}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {/* Status */}
-                <div className="space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Status Comercial</label>
-                  <select
-                    value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="Negociação">Em Negociação</option>
-                    <option value="Aprovado">Aprovado (Venda Fechada)</option>
-                    <option value="Perdido">Perdido</option>
-                  </select>
-                </div>
-
-                {/* Obs */}
-                <div className="col-span-2 space-y-1 text-xs">
-                  <label className="font-semibold text-slate-600">Notas Comerciais</label>
-                  <textarea
-                    value={formObs}
-                    onChange={(e) => setFormObs(e.target.value)}
-                    placeholder="Informações adicionais da negociação ou necessidades específicas do cliente..."
-                    rows={2}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-xs resize-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  Salvar
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setActiveTab("oportunidades")}
+                className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-extrabold hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-extrabold hover:bg-blue-700 transition-colors shadow-xs cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                Salvar Oportunidade
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

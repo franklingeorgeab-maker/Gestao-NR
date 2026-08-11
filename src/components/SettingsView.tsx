@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { SystemHoliday, UserAccount, ClientCompany, Regional, AccessProfile } from "../types";
+import SesiLogo from "./SesiLogo";
 import { 
   Settings, 
   Calendar as CalendarIcon, 
@@ -19,7 +20,12 @@ import {
   Search,
   UserCheck,
   Globe,
-  Tag
+  Tag,
+  Upload,
+  Image as ImageIcon,
+  RotateCcw,
+  Check,
+  Sparkles
 } from "lucide-react";
 
 interface SettingsViewProps {
@@ -40,6 +46,9 @@ interface SettingsViewProps {
 
   activeUser: UserAccount;
   onSwitchUser: (user: UserAccount) => void;
+
+  customLogoUrl?: string | null;
+  onUpdateCustomLogo?: (logoUrl: string | null) => void;
 }
 
 export default function SettingsView({
@@ -56,9 +65,14 @@ export default function SettingsView({
   onUpdateClient,
   onDeleteClient,
   activeUser,
-  onSwitchUser
+  onSwitchUser,
+  customLogoUrl = null,
+  onUpdateCustomLogo
 }: SettingsViewProps) {
-  const [activeTab, setActiveTab] = useState<"holidays" | "users" | "clients">("holidays");
+  const [activeTab, setActiveTab] = useState<"holidays" | "users" | "clients" | "logo">("holidays");
+  const [logoPreview, setLogoPreview] = useState<string | null>(customLogoUrl);
+  const [logoUrlInput, setLogoUrlInput] = useState<string>("");
+  const [logoSaveSuccess, setLogoSaveSuccess] = useState<boolean>(false);
 
   // Holiday Filters & Forms
   const [holidaySearch, setHolidaySearch] = useState("");
@@ -258,6 +272,44 @@ export default function SettingsView({
     setIsClientModalOpen(false);
   };
 
+  // Handlers for Custom Logo
+  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("O arquivo selecionado deve ter no máximo 5MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setLogoPreview(reader.result);
+          setLogoSaveSuccess(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleApplyCustomLogo = () => {
+    const finalUrl = logoUrlInput.trim() || logoPreview;
+    if (onUpdateCustomLogo) {
+      onUpdateCustomLogo(finalUrl || null);
+    }
+    setLogoSaveSuccess(true);
+    setTimeout(() => setLogoSaveSuccess(false), 3000);
+  };
+
+  const handleResetToDefaultLogo = () => {
+    setLogoPreview(null);
+    setLogoUrlInput("");
+    if (onUpdateCustomLogo) {
+      onUpdateCustomLogo(null);
+    }
+    setLogoSaveSuccess(true);
+    setTimeout(() => setLogoSaveSuccess(false), 3000);
+  };
+
   // Filtered lists
   const filteredHolidays = holidays.filter(h => {
     const matchSearch = h.name.toLowerCase().includes(holidaySearch.toLowerCase()) ||
@@ -330,6 +382,18 @@ export default function SettingsView({
           >
             <Building2 className="w-4 h-4 text-purple-600" />
             <span>Clientes & Indústrias ({clients.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("logo")}
+            className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all flex items-center gap-2 ${
+              activeTab === "logo"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <ImageIcon className="w-4 h-4 text-amber-500" />
+            <span>Logo Personalizada</span>
           </button>
         </div>
       </div>
@@ -732,6 +796,132 @@ export default function SettingsView({
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: CUSTOM LOGO MANAGEMENT */}
+      {activeTab === "logo" && (
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-amber-500" />
+                Inclusão de Logo Personalizada
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Envie uma imagem para substituir a marca exibida no cabeçalho e relatórios da plataforma.
+              </p>
+            </div>
+            {logoSaveSuccess && (
+              <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5 animate-fadeIn">
+                <Check className="w-4 h-4 text-emerald-600" />
+                Logo salva com sucesso!
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left side: Upload & Options */}
+            <div className="space-y-5">
+              {/* File Upload Area */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">
+                  1. Selecionar Arquivo de Imagem (PNG, JPG, WEBP, SVG)
+                </label>
+                <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-6 text-center bg-slate-50 hover:bg-blue-50/30 transition-all cursor-pointer relative group">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoFileUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="p-3 bg-white rounded-xl shadow-xs group-hover:scale-105 transition-transform">
+                      <Upload className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <p className="text-xs font-extrabold text-slate-800">
+                      Clique aqui para selecionar a logo do seu computador
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-medium">
+                      Suporta arquivos de até 5MB (Formatos recomendados: PNG transparente ou SVG)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct URL Option */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">
+                  2. Ou Cole uma URL da Imagem da Logo
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={logoUrlInput}
+                    onChange={(e) => {
+                      setLogoUrlInput(e.target.value);
+                      if (e.target.value) setLogoPreview(e.target.value);
+                    }}
+                    placeholder="https://exemplo.com.br/sua-logo.png"
+                    className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleApplyCustomLogo}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Aplicar Logo Personalizada</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResetToDefaultLogo}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Restaurar Logo Padrão SESI</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right side: Live Header Preview */}
+            <div className="space-y-3 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+              <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                Pré-visualização ao Vivo no Cabeçalho
+              </h4>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Assim é como a marca será renderizada no topo do sistema e nas documentações:
+              </p>
+
+              {/* Header Box Preview */}
+              <div className="bg-gradient-to-r from-blue-800 via-blue-900 to-sky-900 p-4 rounded-xl shadow-md border border-blue-700/50 flex items-center justify-between mt-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-300 flex items-center justify-center">
+                    <SesiLogo className="h-7" variant="color" customLogoUrl={logoPreview} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-white block">Gestão Integrada NR</span>
+                    <span className="text-[9px] text-blue-200 font-semibold uppercase">SGN PRO</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs space-y-1 mt-2">
+                <span className="text-[10px] font-bold uppercase text-slate-400">Status Atual da Logo</span>
+                <p className="font-extrabold text-slate-800">
+                  {logoPreview ? "🟢 Logo Personalizada Ativa" : "🔵 Logo Padrão SESI Ativa"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
