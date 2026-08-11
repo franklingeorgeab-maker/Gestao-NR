@@ -107,6 +107,13 @@ export interface CourseClass {
   revenueRealized: number;
   billingCallNumber?: string; // Nº abertura chamado
   crmNumber?: string; // CRM opportunity number if generated from commercial
+  room?: string; // Ensalamento / Sala definida pelo PCP
+  additionalInfo?: string; // Informações adicionais e orientações do PCP para o instrutor
+  materials?: { id: string; name: string; size?: string; type?: string; uploadedAt?: string }[]; // Arquivos e materiais de apoio
+  studentListType?: "InCompany" | "Dependencia" | "Online" | "PAC";
+  studentListFile?: { name: string; size?: string; uploadedAt?: string; type?: string };
+  studentListFiles?: { id: string; name: string; size?: string; type?: string; uploadedAt?: string }[];
+  students?: { id: string; name: string; cpf?: string; email?: string; company?: string; status?: string }[];
   notes?: string;
 }
 

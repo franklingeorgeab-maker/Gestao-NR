@@ -888,13 +888,6 @@ export default function CommercialSupportView({
             <Building2 className="w-4 h-4 text-blue-600" />
             Oportunidades Comerciais CRM Ativas
           </h3>
-          <button
-            onClick={() => handleOpenOppForm()}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Nova Oportunidade
-          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1605,27 +1598,100 @@ export default function CommercialSupportView({
                   value={formObs}
                   onChange={(e) => setFormObs(e.target.value)}
                   placeholder="Informações adicionais da negociação ou necessidades específicas do cliente..."
-                  rows={3}
+                  rows={2}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-medium text-slate-900 resize-none text-xs"
                 />
               </div>
+
+              {/* Agenda & Availability Verification Panel for Opportunities */}
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-200 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-200/60 pb-2">
+                  <span className="text-xs font-extrabold text-blue-900 flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-blue-600" />
+                    Validação de Disponibilidade & Gestão de Nova Agenda
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQueryCourseId(formCourseId || courses[0]?.id || "");
+                      setQueryRegional(formRegional);
+                      setQueryDate(formDate);
+                      setQueryPeriod(formPeriod);
+                      alert(`Disponibilidade calculada com sucesso para a Regional ${formRegional} no dia ${formDate}! Consulte os detalhes no Filtro de Disponibilidade.`);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    Verificar Disponibilidade de Agenda
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-blue-800 font-medium leading-relaxed">
+                  Ao alterar a previsão de data ou o período do curso na oportunidade, verifique se há instrutores disponíveis na regional. Ao clicar em <strong>"Salvar Nova Agenda"</strong>, as novas datas serão automaticamente atualizadas e refletidas no calendário e na pré-turma do PCP.
+                </p>
+              </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100">
               <button
                 type="button"
-                onClick={() => setActiveTab("oportunidades")}
-                className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-extrabold hover:bg-slate-50 transition-colors cursor-pointer"
+                onClick={() => {
+                  if (!formDate) {
+                    alert("Por favor, selecione uma data para a nova agenda.");
+                    return;
+                  }
+                  // Save opp and update matching class if present
+                  const oppData: CRMOpportunity = {
+                    id: editingOpp ? editingOpp.id : `opp-${Date.now()}`,
+                    crmNumber: formCrm || `CRM-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+                    psNumber: formPs || `PS-2026-${Math.floor(100 + Math.random() * 900)}`,
+                    clientName: formClient || "Cliente Oportunidade",
+                    courseId: formCourseId || courses[0]?.id || "",
+                    regional: formRegional,
+                    desiredDate: formDate,
+                    period: formPeriod,
+                    participants: Number(formParticipants),
+                    status: formStatus,
+                    observations: formObs
+                  };
+
+                  if (editingOpp) {
+                    onUpdateOpportunity(oppData);
+                  } else {
+                    onAddOpportunity(oppData);
+                  }
+
+                  // Update matching class in classes if exists
+                  const matchingClass = classes.find(c => c.crmNumber === formCrm || c.clientName === formClient);
+                  if (matchingClass) {
+                    onPromoteOpportunity(oppData);
+                  }
+
+                  alert(`Nova agenda salva com sucesso! Oportunidade ${oppData.crmNumber} atualizada com data de início ${formDate} (${formPeriod}).`);
+                  setActiveTab("oportunidades");
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition-all shadow-2xs cursor-pointer"
               >
-                Cancelar
+                <Calendar className="w-4 h-4" />
+                Salvar Nova Agenda
               </button>
-              <button
-                type="submit"
-                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-extrabold hover:bg-blue-700 transition-colors shadow-xs cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                Salvar Oportunidade
-              </button>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("oportunidades")}
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-extrabold hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-extrabold hover:bg-blue-700 transition-colors shadow-xs cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  Salvar Oportunidade
+                </button>
+              </div>
             </div>
           </form>
         </div>

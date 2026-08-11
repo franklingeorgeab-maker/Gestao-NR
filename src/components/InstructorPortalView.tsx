@@ -17,7 +17,13 @@ import {
   FileSpreadsheet,
   ChevronRight,
   Sparkles,
-  Circle
+  Circle,
+  Download,
+  FileText,
+  FolderArchive,
+  Info,
+  Building2,
+  Layers
 } from "lucide-react";
 import { Instructor, CourseClass, Course, StepStatus } from "../types";
 
@@ -192,8 +198,15 @@ export default function InstructorPortalView({
                     </div>
 
                     <div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Ensalamento / Local de Aula (PCP)</p>
+                      <p className="font-extrabold text-blue-900 bg-blue-50/70 px-2.5 py-1 rounded-lg border border-blue-200/60 inline-block mt-0.5">
+                        🏫 {currentClass.room || "Sala a definir pelo PCP"}
+                      </p>
+                    </div>
+
+                    <div>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Responsável pelo Atendimento</p>
-                      <p className="font-semibold text-slate-800 mt-0.5">Supervisor do PCP SESI / Regional Oeste</p>
+                      <p className="font-semibold text-slate-800 mt-0.5">Supervisor do PCP SESI / Regional {currentClass.regional}</p>
                     </div>
 
                     <div>
@@ -221,60 +234,255 @@ export default function InstructorPortalView({
                       ✍️ Diários e Lançamentos SGN
                     </h4>
 
-                    <p className="text-slate-500 leading-relaxed text-[11px] font-medium">
-                      Como instrutor, você é responsável por ministrar o conteúdo regulamentar e lançar o diário físico/lista para que a secretaria emita os certificados.
-                    </p>
+                    {(() => {
+                      const isCourseDone = currentClass.steps.find(s => s.name === "Curso Realizado")?.status === "Concluído";
+                      const isDiaryDone = currentClass.steps.find(s => s.name === "Diário Lançado")?.status === "Concluído";
 
-                    <div className="space-y-2 mt-2">
-                      {/* Checkboxes indicators */}
-                      <div className="flex items-center gap-2 text-[11px]">
-                        {currentClass.steps.find(s => s.name === "Curso Realizado")?.status === "Concluído" ? (
-                          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                        ) : (
-                          <Circle className="w-4 h-4 text-slate-300 shrink-0" />
-                        )}
-                        <span className="font-bold text-slate-700">Etapa: Curso Realizado</span>
-                      </div>
+                      return (
+                        <div className="space-y-3 pt-1">
+                          {/* Toggle 1: Marcar Curso como Realizado */}
+                          <div className="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
+                            <div className="flex items-center gap-2.5">
+                              <div className={`p-2 rounded-xl transition-colors ${isCourseDone ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+                                <CheckCircle className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="font-extrabold text-slate-800 text-xs">Curso Realizado</p>
+                                <p className="text-[10px] text-slate-500 font-medium">
+                                  {isCourseDone ? "Concluído pelo instrutor" : "Pendente de realização"}
+                                </p>
+                              </div>
+                            </div>
 
-                      <div className="flex items-center gap-2 text-[11px]">
-                        {currentClass.steps.find(s => s.name === "Diário Lançado")?.status === "Concluído" ? (
-                          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                        ) : (
-                          <Circle className="w-4 h-4 text-slate-300 shrink-0" />
-                        )}
-                        <span className="font-bold text-slate-700">Etapa: Diário Lançado</span>
-                      </div>
-                    </div>
-                  </div>
+                            {/* Sliding Toggle Switch */}
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={isCourseDone}
+                              onClick={() => {
+                                const newStatus: StepStatus = isCourseDone ? "Pendente" : "Concluído";
+                                const note = isCourseDone ? undefined : `Concluído pelo instrutor ${selectedInstructor.name}`;
+                                onUpdateStep(currentClass.id, "Curso Realizado", newStatus, note);
+                              }}
+                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                isCourseDone ? "bg-emerald-600" : "bg-slate-300"
+                              }`}
+                              title={isCourseDone ? "Clique para desmarcar curso realizado" : "Clique para marcar curso como realizado"}
+                            >
+                              <span
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                                  isCourseDone ? "translate-x-5" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                          </div>
 
-                  <div className="space-y-2 pt-2 border-t border-slate-200">
-                    <button
-                      onClick={() => {
-                        onUpdateStep(currentClass.id, "Curso Realizado", "Concluído", `Concluído pelo instrutor ${selectedInstructor.name}`);
-                        alert("Curso marcado como realizado! O PCP e a Supervisão foram informados no fluxo operacional.");
-                      }}
-                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-[11px] transition-all flex items-center justify-center gap-1.5 shadow-xs"
-                    >
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      Marcar Curso como Realizado
-                    </button>
+                          {/* Toggle 2: Lançar Diário de Classe */}
+                          <div className="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
+                            <div className="flex items-center gap-2.5">
+                              <div className={`p-2 rounded-xl transition-colors ${isDiaryDone ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+                                <FileSpreadsheet className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <p className="font-extrabold text-slate-800 text-xs">Diário Lançado</p>
+                                <p className="text-[10px] text-slate-500 font-medium">
+                                  {isDiaryDone ? "Diário digitado e enviado" : "Pendente de lançamento"}
+                                </p>
+                              </div>
+                            </div>
 
-                    <button
-                      onClick={() => {
-                        onUpdateStep(currentClass.id, "Diário Lançado", "Concluído", `Diário digitado e enviado pelo instrutor ${selectedInstructor.name}`);
-                        alert("Diário de classe lançado! A Secretaria agora pode emitir os certificados dos alunos.");
-                      }}
-                      className="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-[11px] border border-slate-300 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
-                      Lançar Diário de Classe
-                    </button>
+                            {/* Sliding Toggle Switch */}
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={isDiaryDone}
+                              onClick={() => {
+                                const newStatus: StepStatus = isDiaryDone ? "Pendente" : "Concluído";
+                                const note = isDiaryDone ? undefined : `Diário digitado e enviado pelo instrutor ${selectedInstructor.name}`;
+                                onUpdateStep(currentClass.id, "Diário Lançado", newStatus, note);
+                              }}
+                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                isDiaryDone ? "bg-emerald-600" : "bg-slate-300"
+                              }`}
+                              title={isDiaryDone ? "Clique para desmarcar diário lançado" : "Clique para marcar diário como lançado"}
+                            >
+                              <span
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                                  isDiaryDone ? "translate-x-5" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
               </div>
 
-              {/* Syllabus (Ficha de curso) */}
+              {/* Informações Adicionais e Materiais Anexados pelo PCP */}
+              <div className="space-y-3.5 border-t border-slate-100 pt-5">
+                <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                  <FolderArchive className="w-4 h-4 text-emerald-600" />
+                  Informações Adicionais & Materiais Pedagógicos (Definidos pelo PCP)
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Orientações do PCP */}
+                  <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-200/80 space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1">
+                      <Info className="w-3.5 h-3.5 text-emerald-600" />
+                      Orientações Adicionais da Turma
+                    </p>
+                    <p className="text-xs text-emerald-950 leading-relaxed font-medium whitespace-pre-wrap">
+                      {currentClass.additionalInfo || "Nenhuma orientação especial cadastrada. Seguir ementa e cronograma oficial."}
+                    </p>
+                  </div>
+
+                  {/* Arquivos de Apoio */}
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5 text-slate-600" />
+                      Materiais de Apoio & Planos de Aula ({currentClass.materials?.length || 0})
+                    </p>
+                    {currentClass.materials && currentClass.materials.length > 0 ? (
+                      <div className="space-y-1.5 pt-1">
+                        {currentClass.materials.map((mat) => (
+                          <div key={mat.id} className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 text-xs">
+                            <div className="flex items-center gap-2 truncate">
+                              <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                              <span className="font-bold text-slate-800 truncate">{mat.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">({mat.size})</span>
+                            </div>
+                            <button
+                              onClick={() => alert(`Iniciando download de: ${mat.name}`)}
+                              className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              title="Baixar Material"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 italic pt-1">Nenhum arquivo ou apostila anexado para esta turma.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista de Alunos (In Company / Dependência / PAC vs EAD Online) */}
+              <div className="space-y-3.5 border-t border-slate-100 pt-5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Users className="w-4 h-4 text-slate-600" />
+                    Lista de Alunos da Turma
+                  </h4>
+                  {currentClass.type === "EAD_TURMA" ? (
+                    <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-extrabold rounded-full uppercase">
+                      100% Online EAD (SGN)
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-extrabold rounded-full uppercase">
+                      In-Company / Presencial
+                    </span>
+                  )}
+                </div>
+
+                {currentClass.type === "EAD_TURMA" ? (
+                  <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-200 text-xs text-blue-900 flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-extrabold">Alunos de Curso Online (EAD)</p>
+                      <p className="text-[11px] text-blue-800 mt-0.5 leading-relaxed">
+                        Os alunos de turmas 100% online são cadastrados e matriculados individualmente no SGN separadamente pela Secretaria. O acompanhamento de acesso e diário EAD ocorre diretamente na plataforma de ensino.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* File Download Banners if provided */}
+                    {(currentClass.studentListFiles && currentClass.studentListFiles.length > 0) ? (
+                      <div className="space-y-2">
+                        {currentClass.studentListFiles.map((file) => (
+                          <div key={file.id} className="flex items-center justify-between bg-slate-900 text-white p-3.5 rounded-2xl shadow-xs">
+                            <div className="flex items-center gap-3">
+                              <FileSpreadsheet className="w-5 h-5 text-emerald-400 shrink-0" />
+                              <div>
+                                <p className="text-xs font-extrabold">{file.name}</p>
+                                <p className="text-[10px] text-slate-300">
+                                  Arquivo oficial com a listagem de alunos cadastrados ({file.size || "Anexo"}) • {file.uploadedAt || "Recente"}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => alert(`Baixando arquivo de alunos: ${file.name}`)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Baixar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : currentClass.studentListFile ? (
+                      <div className="flex items-center justify-between bg-slate-900 text-white p-3.5 rounded-2xl shadow-xs">
+                        <div className="flex items-center gap-3">
+                          <FileSpreadsheet className="w-5 h-5 text-emerald-400 shrink-0" />
+                          <div>
+                            <p className="text-xs font-extrabold">{currentClass.studentListFile.name}</p>
+                            <p className="text-[10px] text-slate-300">Arquivo oficial com a listagem de alunos cadastrados da empresa ({currentClass.studentListFile.size})</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => alert(`Baixando arquivo de alunos: ${currentClass.studentListFile?.name}`)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Baixar Arquivo
+                        </button>
+                      </div>
+                    ) : null}
+
+                    {/* Table of students if populated */}
+                    {currentClass.students && currentClass.students.length > 0 ? (
+                      <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                        <table className="w-full text-left text-xs text-slate-700">
+                          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
+                            <tr>
+                              <th className="px-4 py-2.5">Nome do Aluno</th>
+                              <th className="px-4 py-2.5">CPF</th>
+                              <th className="px-4 py-2.5">E-mail</th>
+                              <th className="px-4 py-2.5">Empresa / Vínculo</th>
+                              <th className="px-4 py-2.5">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {currentClass.students.map((st) => (
+                              <tr key={st.id} className="hover:bg-slate-50">
+                                <td className="px-4 py-3 font-bold text-slate-800">{st.name}</td>
+                                <td className="px-4 py-3 font-mono text-slate-600">{st.cpf || "—"}</td>
+                                <td className="px-4 py-3 text-slate-600">{st.email || "—"}</td>
+                                <td className="px-4 py-3 text-slate-600">{st.company || currentClass.clientName}</td>
+                                <td className="px-4 py-3">
+                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold text-[10px]">
+                                    {st.status || "Matriculado"}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : !currentClass.studentListFile && (
+                      <p className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        Nenhuma lista física de alunos anexada para esta turma no momento.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="space-y-3.5 border-t border-slate-100 pt-5">
                 <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
                   <BookOpen className="w-4 h-4 text-slate-600" />

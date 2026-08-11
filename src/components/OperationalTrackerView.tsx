@@ -22,7 +22,17 @@ import {
   User,
   Hash,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  FolderArchive,
+  Building2,
+  Info,
+  Sparkles,
+  FileText,
+  FileSpreadsheet,
+  Download,
+  Users,
+  Upload,
+  X
 } from "lucide-react";
 import { CourseClass, Course, Instructor, AccessProfile, OperationalStep, StepStatus, ClassStatus, Regional, CourseType } from "../types";
 import { MUNICIPALITIES, formatLocation } from "../data/municipalities";
@@ -46,6 +56,9 @@ export default function OperationalTrackerView({
 }: OperationalTrackerViewProps) {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(classes[0]?.id || null);
   const [isNewClassModalOpen, setIsNewClassModalOpen] = useState(false);
+  const [isPcpInfoModalOpen, setIsPcpInfoModalOpen] = useState(false);
+  const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
+  const [editStudentListFiles, setEditStudentListFiles] = useState<{ id: string; name: string; size?: string; type?: string; uploadedAt?: string }[]>([]);
 
   // Form states for creating a Class
   const [formCourseId, setFormCourseId] = useState(courses[0]?.id || "");
@@ -71,11 +84,16 @@ export default function OperationalTrackerView({
 
   const activeClass = classes.find(c => c.id === selectedClassId) || classes[0];
 
-  // States for Editing Agenda (Supervisor/Coordination)
+  const DEFAULT_INFO_TEMPLATE = "Carro: \nPlaca: \nData: \nHora: ";
+
+  // States for Editing Agenda & PCP Information
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
   const [editPeriod, setEditPeriod] = useState<any>("Matutino");
   const [editScheduleDays, setEditScheduleDays] = useState("");
+  const [editRoom, setEditRoom] = useState("");
+  const [editAdditionalInfo, setEditAdditionalInfo] = useState("");
+  const [editMaterials, setEditMaterials] = useState<{ id: string; name: string; size?: string; type?: string; uploadedAt?: string }[]>([]);
   const [lastSelectedClassId, setLastSelectedClassId] = useState<string | null>(null);
 
   React.useEffect(() => {
@@ -84,6 +102,22 @@ export default function OperationalTrackerView({
       setEditEndDate(activeClass.endDate);
       setEditPeriod(activeClass.period);
       setEditScheduleDays(activeClass.scheduleDays);
+      setEditRoom(activeClass.room || "");
+      setEditAdditionalInfo(activeClass.additionalInfo || DEFAULT_INFO_TEMPLATE);
+      setEditMaterials(activeClass.materials || []);
+      setEditStudentListFiles(
+        activeClass.studentListFiles && activeClass.studentListFiles.length > 0
+          ? activeClass.studentListFiles
+          : activeClass.studentListFile
+          ? [{
+              id: "file-initial",
+              name: activeClass.studentListFile.name,
+              size: activeClass.studentListFile.size || "1.2 MB",
+              type: activeClass.studentListFile.type || "PDF / Excel",
+              uploadedAt: activeClass.studentListFile.uploadedAt || "2026-07-22"
+            }]
+          : []
+      );
       setLastSelectedClassId(activeClass.id);
     }
   }, [activeClass?.id, lastSelectedClassId]);
@@ -210,21 +244,20 @@ export default function OperationalTrackerView({
       return;
     }
 
-    // Scaffold 13 default steps
+    // Scaffold 12 default steps
     const defaultSteps: OperationalStep[] = [
       { id: "step-1", name: "Demanda Comercial", status: "Concluído", responsible: "Comercial" },
       { id: "step-2", name: "Proposta", status: "Concluído", responsible: "Comercial" },
       { id: "step-3", name: "Contrato", status: "Concluído", responsible: "Comercial" },
-      { id: "step-4", name: "Turma Criada", status: "Concluído", responsible: "PCP" },
-      { id: "step-5", name: "Instrutor Definido", status: formInstructorId ? "Concluído" : "Pendente", responsible: "PCP", notes: formInstructorId ? "Definido no cadastro inicial" : "" },
-      { id: "step-6", name: "Ensalamento", status: "Pendente", responsible: "PCP" },
-      { id: "step-7", name: "Lista de Alunos", status: "Pendente", responsible: "Secretária" },
-      { id: "step-8", name: "Materiais", status: "Pendente", responsible: "PCP" },
-      { id: "step-9", name: "Curso Realizado", status: "Pendente", responsible: "Instrutor" },
-      { id: "step-10", name: "Diário Lançado", status: "Pendente", responsible: "Instrutor" },
-      { id: "step-11", name: "Certificados Emitidos", status: "Pendente", responsible: "Secretária" },
-      { id: "step-12", name: "Faturamento", status: "Pendente", responsible: "Faturamento" },
-      { id: "step-13", name: "Finalizado", status: "Pendente", responsible: "Supervisão" }
+      { id: "step-4", name: "Turma Criada", status: "Concluído", responsible: "Secretária" },
+      { id: "step-5", name: "Instrutor Definido e Ensalamento", status: formInstructorId ? "Concluído" : "Pendente", responsible: "PCP", notes: formInstructorId ? "Definido no cadastro inicial" : "" },
+      { id: "step-6", name: "Informações Adicionais e Materiais", status: "Pendente", responsible: "PCP" },
+      { id: "step-7", name: "Lista de Alunos / Matrículas", status: "Pendente", responsible: "Secretária" },
+      { id: "step-8", name: "Curso Realizado", status: "Pendente", responsible: "Instrutor" },
+      { id: "step-9", name: "Diário Lançado", status: "Pendente", responsible: "Instrutor" },
+      { id: "step-10", name: "Certificados Emitidos", status: "Pendente", responsible: "Secretária" },
+      { id: "step-11", name: "Faturamento", status: "Pendente", responsible: "Faturamento" },
+      { id: "step-12", name: "Finalizado", status: "Pendente", responsible: "Supervisão" }
     ];
 
     const newClassData: CourseClass = {
@@ -245,6 +278,9 @@ export default function OperationalTrackerView({
       revenuePredicted: Number(formRevenuePredicted),
       revenueRealized: 0,
       steps: defaultSteps,
+      room: "Sala a definir pelo PCP",
+      additionalInfo: DEFAULT_INFO_TEMPLATE,
+      materials: [],
       notes: formNotes
     };
 
@@ -379,7 +415,23 @@ export default function OperationalTrackerView({
                   </p>
                 </div>
                 
-                <div className="flex gap-2 self-start sm:self-auto">
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                  {(currentProfile === "PCP" || currentProfile === "Supervisão" || currentProfile === "Secretária") && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditRoom(activeClass.room || "");
+                        setEditAdditionalInfo(activeClass.additionalInfo || DEFAULT_INFO_TEMPLATE);
+                        setEditMaterials(activeClass.materials || []);
+                        setIsPcpInfoModalOpen(true);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    >
+                      <FolderArchive className="w-4 h-4" />
+                      Informações Adicionais & Materiais
+                    </button>
+                  )}
+
                   {/* Quick actions depending on profile */}
                   {(currentProfile === "PCP" || currentProfile === "Supervisão") && (
                     <div className="flex flex-col space-y-1 text-right">
@@ -493,7 +545,7 @@ export default function OperationalTrackerView({
                                 {step.responsible}
                               </span>
                             </div>
-                            {step.notes && (
+                            {step.notes && !step.notes.includes("Informações e materiais salvos pelo PCP") && !step.notes.includes("salvos pelo PCP") && (
                               <p className="text-[10px] text-slate-500 font-mono italic mt-0.5">
                                 Nota: {step.notes}
                               </p>
@@ -503,6 +555,35 @@ export default function OperationalTrackerView({
 
                         {/* Status controls */}
                         <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+                          {(step.id === "step-6" || step.name.includes("Informações Adicionais")) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditRoom(activeClass.room || "");
+                                setEditAdditionalInfo(activeClass.additionalInfo || DEFAULT_INFO_TEMPLATE);
+                                setEditMaterials(activeClass.materials || []);
+                                setIsPcpInfoModalOpen(true);
+                              }}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-2xs cursor-pointer"
+                            >
+                              <FolderArchive className="w-3.5 h-3.5" />
+                              Preencher Pop-up
+                            </button>
+                          )}
+
+                          {(step.id === "step-7" || step.name.includes("Lista de Alunos")) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsStudentListModalOpen(true);
+                              }}
+                              className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-2xs cursor-pointer"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                              Subir Lista de Alunos
+                            </button>
+                          )}
+
                           {isOwnStep ? (
                             <div className="flex gap-1.5 bg-white p-1 rounded-lg border border-slate-200">
                               {["Pendente", "Em andamento", "Concluído", "N/A"].map((st) => (
@@ -930,6 +1011,345 @@ export default function OperationalTrackerView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pop-up Modal for Informações Adicionais & Materiais (PCP) */}
+      {isPcpInfoModalOpen && activeClass && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 border border-slate-100 my-8 animate-in fade-in-50 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-600">
+                  <FolderArchive className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">
+                    Informações Adicionais & Materiais (PCP)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Turma: <span className="font-bold text-slate-800">{courses.find(c => c.id === activeClass.courseId)?.name}</span> • {activeClass.clientName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPcpInfoModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Field 1: Ensalamento / Sala */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 flex items-center gap-1 uppercase tracking-wider text-[10px]">
+                  <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                  Ensalamento / Sala Definida (PCP)
+                </label>
+                <input
+                  type="text"
+                  value={editRoom}
+                  onChange={(e) => setEditRoom(e.target.value)}
+                  placeholder="Ex: Sala 102 - Bloco A (Videira) / Senai Unidade Centro"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 font-semibold text-slate-800 text-xs shadow-2xs"
+                />
+              </div>
+
+              {/* Field 2: Informações Adicionais (com o modelo pré-digitado: Carro, Placa, Data, Hora) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-700 flex items-center gap-1 uppercase tracking-wider text-[10px]">
+                    <Info className="w-3.5 h-3.5 text-emerald-600" />
+                    Informações Adicionais e Logística para o Instrutor
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!editAdditionalInfo || editAdditionalInfo.trim() === "") {
+                        setEditAdditionalInfo(DEFAULT_INFO_TEMPLATE);
+                      } else {
+                        setEditAdditionalInfo(prev => prev + (prev.endsWith("\n") ? "" : "\n") + DEFAULT_INFO_TEMPLATE);
+                      }
+                    }}
+                    className="text-[10px] text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1 bg-emerald-100/70 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    Preencher Modelo (Carro, Placa, Data, Hora)
+                  </button>
+                </div>
+
+                <textarea
+                  rows={5}
+                  value={editAdditionalInfo}
+                  onChange={(e) => setEditAdditionalInfo(e.target.value)}
+                  placeholder={"Carro: \nPlaca: \nData: \nHora: "}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 font-mono text-xs text-slate-800 resize-y leading-relaxed shadow-2xs"
+                />
+                <p className="text-[10px] text-slate-400">
+                  💡 Este campo contém as informações de <strong>Carro, Placa, Data e Hora</strong> que serão exibidas diretamente para o professor no Portal do Instrutor.
+                </p>
+              </div>
+
+              {/* Field 3: Materiais Pedagógicos e Apoio */}
+              <div className="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-700 flex items-center gap-1 uppercase tracking-wider text-[10px]">
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    Materiais Pedagógicos & Anexos ({editMaterials.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const fileName = prompt("Digite o nome do arquivo/material pedagógico (ex: Apostila_NR35.pdf):", "Apostila_Treinamento_Oficial.pdf");
+                      if (fileName) {
+                        const newMat = {
+                          id: `mat-${Date.now()}`,
+                          name: fileName,
+                          size: "1.8 MB",
+                          type: fileName.endsWith(".pdf") ? "PDF" : "Documento",
+                          uploadedAt: new Date().toISOString().split("T")[0]
+                        };
+                        setEditMaterials([...editMaterials, newMat]);
+                      }
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[10px] rounded-lg border border-blue-200 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Anexar Material
+                  </button>
+                </div>
+
+                {editMaterials.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {editMaterials.map((mat) => (
+                      <div key={mat.id} className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 text-xs">
+                        <div className="flex items-center gap-2 truncate">
+                          <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                          <span className="font-bold text-slate-800 truncate">{mat.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditMaterials(editMaterials.filter(m => m.id !== mat.id))}
+                          className="text-rose-500 hover:text-rose-700 p-1 font-bold text-xs cursor-pointer"
+                          title="Remover material"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic pt-1">Nenhum arquivo ou apostila anexado no momento.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsPcpInfoModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const updatedSteps = activeClass.steps.map(s => {
+                    if (s.id === "step-5" && editRoom) {
+                      return { ...s, status: "Concluído" as StepStatus, notes: `Ensalamento: ${editRoom}` };
+                    }
+                    if (s.id === "step-6") {
+                      return { ...s, status: "Concluído" as StepStatus, notes: undefined };
+                    }
+                    return s;
+                  });
+
+                  onUpdateClass({
+                    ...activeClass,
+                    room: editRoom,
+                    additionalInfo: editAdditionalInfo,
+                    materials: editMaterials,
+                    steps: updatedSteps
+                  });
+                  setIsPcpInfoModalOpen(false);
+                  alert("Informações adicionais e materiais salvos com sucesso!");
+                }}
+                className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                Salvar Informações & Concluir Etapa 6
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pop-up Modal for Lista de Alunos / Matrículas (Etapa 7) */}
+      {isStudentListModalOpen && activeClass && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 border border-slate-100 my-8 animate-in fade-in-50 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">
+                    Lista de Alunos / Matrículas (Etapa 7)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Turma: <span className="font-bold text-slate-800">{courses.find(c => c.id === activeClass.courseId)?.name}</span> • {activeClass.clientName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsStudentListModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Upload File Input Area */}
+              <div className="space-y-2">
+                <label className="font-bold text-slate-700 flex items-center gap-1 uppercase tracking-wider text-[10px]">
+                  <Upload className="w-3.5 h-3.5 text-blue-600" />
+                  Anexar Arquivo da Lista de Alunos (Excel, Word, PDF, Imagens, etc.)
+                </label>
+                
+                <div className="border-2 border-dashed border-slate-200 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/40 rounded-2xl p-6 text-center transition-all flex flex-col items-center justify-center gap-2.5">
+                  <div className="w-12 h-12 rounded-full bg-blue-100/80 flex items-center justify-center text-blue-600">
+                    <Upload className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800 text-xs">
+                      Clique abaixo ou selecione o arquivo com a relação de alunos
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Aceita formatos: <strong>.xlsx, .xls, .docx, .doc, .pdf, .png, .jpg, .jpeg, .csv</strong>
+                    </p>
+                  </div>
+
+                  <label className="mt-1 flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer">
+                    <Upload className="w-4 h-4" />
+                    <span>Selecionar Arquivo</span>
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls,.doc,.docx,.pdf,.png,.jpg,.jpeg,.csv"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const ext = file.name.split('.').pop()?.toUpperCase() || 'ARQUIVO';
+                          const newFile = {
+                            id: `student-file-${Date.now()}`,
+                            name: file.name,
+                            size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+                            type: ext,
+                            uploadedAt: new Date().toISOString().split("T")[0]
+                          };
+                          setEditStudentListFiles(prev => [...prev, newFile]);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* List of Attached Student Files */}
+              <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-700 flex items-center gap-1 uppercase tracking-wider text-[10px]">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                    Arquivos de Alunos Anexados ({editStudentListFiles.length})
+                  </span>
+                </div>
+
+                {editStudentListFiles.length > 0 ? (
+                  <div className="space-y-2 pt-1">
+                    {editStudentListFiles.map((file) => (
+                      <div key={file.id} className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 text-xs shadow-2xs">
+                        <div className="flex items-center gap-2.5 truncate">
+                          <FileSpreadsheet className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
+                          <div className="truncate">
+                            <p className="font-bold text-slate-800 truncate">{file.name}</p>
+                            <p className="text-[10px] text-slate-400 font-mono">
+                              {file.size || "1.5 MB"} • Enviado em {file.uploadedAt || new Date().toISOString().split("T")[0]} ({file.type || "Documento"})
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => alert(`Baixando/Visualizando arquivo: ${file.name}`)}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                            title="Baixar / Visualizar"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditStudentListFiles(editStudentListFiles.filter(f => f.id !== file.id))}
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg font-bold transition-colors cursor-pointer"
+                            title="Remover Arquivo"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic pt-1 text-center py-2">
+                    Nenhum arquivo de lista de alunos anexado ainda.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsStudentListModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const firstFile = editStudentListFiles[0];
+                  const updatedSteps = activeClass.steps.map(s => {
+                    if (s.id === "step-7" || s.name.includes("Lista de Alunos")) {
+                      return { 
+                        ...s, 
+                        status: "Concluído" as StepStatus, 
+                        notes: firstFile ? `Arquivo anexado: ${firstFile.name}` : undefined 
+                      };
+                    }
+                    return s;
+                  });
+
+                  onUpdateClass({
+                    ...activeClass,
+                    studentListFiles: editStudentListFiles,
+                    studentListFile: firstFile ? { name: firstFile.name, size: firstFile.size, uploadedAt: firstFile.uploadedAt, type: firstFile.type } : activeClass.studentListFile,
+                    steps: updatedSteps
+                  });
+                  setIsStudentListModalOpen(false);
+                  alert("Lista de alunos e matrículas salva e Etapa 7 concluída com sucesso!");
+                }}
+                className="flex items-center gap-1.5 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                Salvar & Concluir Etapa 7
+              </button>
+            </div>
           </div>
         </div>
       )}

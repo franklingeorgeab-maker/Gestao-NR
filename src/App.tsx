@@ -42,6 +42,7 @@ import DocumentManagementView from "./components/DocumentManagementView";
 import SettingsView from "./components/SettingsView";
 import SesiLogo from "./components/SesiLogo";
 import SystemManualModal from "./components/SystemManualModal";
+import { AIAssistantWidget } from "./components/AIAssistantWidget";
 
 // Icons
 import { 
@@ -856,6 +857,21 @@ export default function App() {
       <SystemManualModal 
         isOpen={isManualOpen} 
         onClose={() => setIsManualOpen(false)} 
+      />
+
+      {/* Floating AI Assistant Widget */}
+      <AIAssistantWidget
+        currentViewName={
+          activeMenu === "dashboard" ? "Painel Gerencial" :
+          activeMenu === "calendar" ? "Agenda Geral" :
+          activeMenu === "tracker" ? "Acompanhamento de Fluxo" :
+          activeMenu === "instructors" ? "Gestão de Instrutores" :
+          activeMenu === "commercial" ? "Apoio ao Comercial" :
+          activeMenu === "portal" ? "Portal do Instrutor" :
+          activeMenu === "courses" ? "Catálogo de Cursos SGN" :
+          activeMenu === "documents" ? "Documentos de Apoio" :
+          activeMenu === "settings" ? "Configuração & Acesso" : "Sistema SGN"
+        }
       />
     </div>
   );

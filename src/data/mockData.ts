@@ -688,16 +688,15 @@ export const STAGES_CONFIG = [
   { id: "step-1", name: "Demanda Comercial", responsible: "Comercial" },
   { id: "step-2", name: "Proposta", responsible: "Comercial" },
   { id: "step-3", name: "Contrato", responsible: "Comercial" },
-  { id: "step-4", name: "Turma Criada", responsible: "PCP" },
-  { id: "step-5", name: "Instrutor Definido", responsible: "PCP" },
-  { id: "step-6", name: "Ensalamento", responsible: "PCP" },
-  { id: "step-7", name: "Lista de Alunos", responsible: "Secretária" },
-  { id: "step-8", name: "Materiais", responsible: "PCP" },
-  { id: "step-9", name: "Curso Realizado", responsible: "Instrutor" },
-  { id: "step-10", name: "Diário Lançado", responsible: "Instrutor" },
-  { id: "step-11", name: "Certificados Emitidos", responsible: "Secretária" },
-  { id: "step-12", name: "Faturamento", responsible: "Faturamento" },
-  { id: "step-13", name: "Finalizado", responsible: "Supervisão" }
+  { id: "step-4", name: "Turma Criada", responsible: "Secretária" },
+  { id: "step-5", name: "Instrutor Definido e Ensalamento", responsible: "PCP" },
+  { id: "step-6", name: "Informações Adicionais e Materiais", responsible: "PCP" },
+  { id: "step-7", name: "Lista de Alunos / Matrículas", responsible: "Secretária" },
+  { id: "step-8", name: "Curso Realizado", responsible: "Instrutor" },
+  { id: "step-9", name: "Diário Lançado", responsible: "Instrutor" },
+  { id: "step-10", name: "Certificados Emitidos", responsible: "Secretária" },
+  { id: "step-11", name: "Faturamento", responsible: "Faturamento" },
+  { id: "step-12", name: "Finalizado", responsible: "Supervisão" }
 ];
 
 export function createDefaultSteps(completedCount = 3, billingCallNumber = "", crmNumber = ""): OperationalStep[] {
@@ -745,6 +744,19 @@ export const INITIAL_CLASSES: CourseClass[] = [
     revenuePredicted: 3000,
     revenueRealized: 0,
     steps: createDefaultSteps(5, "", ""),
+    room: "Sala 102 - Bloco A (Videira)",
+    additionalInfo: "Carro: Renault Kwid SESI Flota\nPlaca: QHI-4321\nData: 27/07/2026\nHora: 18:30",
+    materials: [
+      { id: "mat-1", name: "Apostila_NR35_Trabalho_em_Altura.pdf", size: "2.4 MB", type: "PDF", uploadedAt: "2026-07-20" },
+      { id: "mat-2", name: "Plano_de_Aula_e_Slides_Instrução.pdf", size: "1.1 MB", type: "PDF", uploadedAt: "2026-07-20" }
+    ],
+    studentListType: "InCompany",
+    studentListFile: { name: "Lista_Alunos_Iomere_Vinicola.xlsx", size: "145 KB", uploadedAt: "2026-07-21", type: "Excel" },
+    students: [
+      { id: "st-1", name: "Carlos Eduardo Silva", cpf: "123.456.789-00", email: "carlos@iomere.com.br", company: "Iomerê Vinícola", status: "Matriculado" },
+      { id: "st-2", name: "Mariana Souza Santos", cpf: "234.567.890-11", email: "mariana@iomere.com.br", company: "Iomerê Vinícola", status: "Matriculado" },
+      { id: "st-3", name: "Roberto Almeida", cpf: "345.678.901-22", email: "roberto@iomere.com.br", company: "Iomerê Vinícola", status: "Matriculado" }
+    ],
     notes: "Turma de NR 35 agendada para Videira, Região Centro-Norte com Luiz Ricardo."
   },
   {
