@@ -69,6 +69,36 @@ MANUAL DE CONHECIMENTO COMPLETO DO SISTEMA SGN:
 - *Como abrir uma nova proposta no comercial?* Vá para a aba **Apoio ao Comercial** e clique no botão azul **Nova Oportunidade** no topo da página.
 `;
 
+  function generateLocalFallbackResponse(userQuestion: string, view: string): string {
+    const q = userQuestion.toLowerCase();
+
+    if (q.includes("aluno") || q.includes("lista") || q.includes("matrícula") || q.includes("etapa 7")) {
+      return `Para anexar a lista de alunos e matrículas na turma:\n\n1. Acesse a aba **Acompanhamento de Fluxo**.\n2. Clique sobre a turma desejada.\n3. Localize o card da **Etapa 7: Lista de Alunos / Matrículas**.\n4. Clique no botão azul **Subir Lista de Alunos**.\n5. Selecione o arquivo em seu computador (são aceitos formatos **Excel, PDF, Word, Imagens e CSV**).\n6. Clique em **Salvar & Concluir Etapa 7**. O arquivo ficará disponível para download no Portal do Instrutor.`;
+    }
+
+    if (q.includes("professor") || q.includes("instrutor") || q.includes("alocar") || q.includes("alocação") || q.includes("etapa 4")) {
+      return `Para selecionar ou alterar o professor/instrutor de uma turma:\n\n1. Vá até a aba **Acompanhamento de Fluxo**.\n2. Selecione a turma no painel.\n3. No topo direito do painel de detalhes da turma, localize o campo **Instrutor Alocado**.\n4. Escolha o docente desejado na lista. O sistema verifica automaticamente a disponibilidade de agenda e conclui a **Etapa 4**.`;
+    }
+
+    if (q.includes("diário") || q.includes("diario") || q.includes("realizado") || q.includes("deslizar") || q.includes("toggle") || q.includes("marca")) {
+      return `Para marcar o curso como realizado ou lançar o diário de classe:\n\n1. O professor deve acessar a aba **Portal do Instrutor**.\n2. Selecionar a turma correspondente.\n3. No quadro **✍️ Diários e Lançamentos SGN**, utilize os **botões deslizantes (toggles)** ao lado de:\n   - **Curso Realizado**\n   - **Diário Lançado**\n4. Para marcar como concluído, deslize a chave para a direita (ficará verde). Se digitou errado, basta deslizar novamente para desmarcar.`;
+    }
+
+    if (q.includes("carro") || q.includes("placa") || q.includes("transporte") || q.includes("material") || q.includes("etapa 6") || q.includes("logística") || q.includes("logistica")) {
+      return `Para cadastrar dados de transporte (Carro/Placa/Horário) e materiais da aula:\n\n1. Acesse **Acompanhamento de Fluxo**.\n2. Selecione a turma e clique no botão de ação da **Etapa 6: Informações Adicionais e Materiais**.\n3. Preencha o modelo de texto com as informações de logística (Carro, Placa, Data e Horário) e anexe arquivos de materiais de apoio se necessário.\n4. Clique em **Salvar Informações**. Os dados serão exibidos no Portal do Instrutor.`;
+    }
+
+    if (q.includes("comercial") || q.includes("proposta") || q.includes("oportunidade") || q.includes("crm")) {
+      return `No módulo **Apoio ao Comercial** você pode:\n\n1. Cadastrar novas demandas clicando no botão **Nova Oportunidade** no topo da página.\n2. Acompanhar propostas pelo funil de vendas (Contato Inicial, Elaboração, Negociação, Fechado/Ganha).\n3. Converter propostas ganhas diretamente em turmas no SGN.`;
+    }
+
+    if (q.includes("agenda") || q.includes("calendário") || q.includes("choque") || q.includes("conflito")) {
+      return `Na aba **Agenda de Instrutores** você pode:\n\n1. Visualizar a ocupação diária e mensal de cada docente por cor.\n2. Identificar horários vagos antes de realizar a alocação no PCP.\n3. O sistema impede automaticamente choques de horários para o mesmo professor em turmas simultâneas.`;
+    }
+
+    return `Olá! Estou na visão **${view || "Sistema SGN"}**.\n\nComo posso te ajudar sobre esta tela? Você pode me perguntar sobre:\n\n1. **Como alocar um professor em uma turma**\n2. **Como anexar a lista de alunos (Etapa 7)**\n3. **Como preencher dados de transporte e materiais (Etapa 6)**\n4. **Como o instrutor marca o curso realizado ou diário**\n5. **Como cadastrar propostas no Comercial**`;
+  }
+
   // API Route for AI Assistant
   app.post("/api/ai-assistant", async (req, res) => {
     try {
@@ -86,21 +116,37 @@ MANUAL DE CONHECIMENTO COMPLETO DO SISTEMA SGN:
       }
       contextPrompt += `Pergunta do Usuário: ${message}`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: contextPrompt,
-        config: {
-          systemInstruction: SGN_SYSTEM_CONTEXT,
-          temperature: 0.6,
-        },
-      });
+      const model = "gemini-2.5-flash";
 
-      res.json({ responseText: response.text || "Desculpe, não consegui obter uma resposta para essa pergunta." });
+      let responseText = "";
+
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          const ai = getGenAI();
+          const response = await ai.models.generateContent({
+            model,
+            contents: contextPrompt,
+            config: {
+              systemInstruction: SGN_SYSTEM_CONTEXT,
+              temperature: 0.6,
+            },
+          });
+          responseText = response.text || "";
+        } catch (geminiError: any) {
+          console.error("Erro na chamada do Gemini SDK:", geminiError?.message || geminiError);
+        }
+      }
+
+      // Fallback local caso a API falhe ou a chave não esteja presente
+      if (!responseText) {
+        responseText = generateLocalFallbackResponse(message, currentView);
+      }
+
+      res.json({ responseText });
     } catch (error: any) {
-      console.error("Erro ao chamar API do Gemini:", error);
-      res.status(500).json({
-        error: error?.message || "Ocorreu um erro ao processar sua dúvida com a Inteligência Artificial. Verifique as configurações.",
-      });
+      console.error("Erro no endpoint /api/ai-assistant:", error);
+      const fallbackText = generateLocalFallbackResponse(req.body?.message || "", req.body?.currentView || "");
+      res.json({ responseText: fallbackText });
     }
   });
 

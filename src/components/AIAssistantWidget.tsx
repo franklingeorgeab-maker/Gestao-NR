@@ -123,18 +123,35 @@ export const AIAssistantWidget: React.FC<AIAssistantWidgetProps> = ({
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err) {
       console.error(err);
+      // Fallback local instantâneo do assistente
+      const fallbackText = getClientFallbackAnswer(text.trim(), currentViewName);
       setMessages((prev) => [
         ...prev,
         {
-          id: `ai-err-${Date.now()}`,
+          id: `ai-fallback-${Date.now()}`,
           sender: "ai",
-          text: "⚠️ Não foi possível conectar ao assistente de IA no momento. Por favor, tente novamente em instantes.",
+          text: fallbackText,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Resposta local de contingência caso a conexão falhe
+  const getClientFallbackAnswer = (question: string, view: string): string => {
+    const q = question.toLowerCase();
+    if (q.includes("aluno") || q.includes("lista") || q.includes("etapa 7") || q.includes("matrícula")) {
+      return `Para anexar a lista de alunos e matrículas:\n\n1. Acesse **Acompanhamento de Fluxo**.\n2. Escolha a turma desejada.\n3. Vá até a **Etapa 7: Lista de Alunos / Matrículas**.\n4. Clique no botão **Subir Lista de Alunos**.\n5. Anexe o arquivo (.xlsx, .pdf, .docx, imagens) e clique em **Salvar & Concluir Etapa 7**.`;
+    }
+    if (q.includes("professor") || q.includes("instrutor") || q.includes("alocar") || q.includes("etapa 4")) {
+      return `Para alocar um professor:\n\n1. Vá até a aba **Acompanhamento de Fluxo**.\n2. Clique no seletor **Instrutor Alocado** no canto superior direito do painel da turma.\n3. Escolha o docente desejado. O sistema verifica a agenda e atualiza a **Etapa 4**.`;
+    }
+    if (q.includes("diário") || q.includes("diario") || q.includes("realizado") || q.includes("toggle")) {
+      return `Para o professor registrar a aula ou o diário:\n\n1. Acesse o **Portal do Instrutor**.\n2. Selecione a turma.\n3. Utilize os **botões deslizantes (toggles)** ao lado de **Curso Realizado** e **Diário Lançado**. Se precisar corrigir, deslize novamente para desmarcar.`;
+    }
+    return `Estou pronto para te ajudar na visão **${view}**!\n\nVocê pode me perguntar sobre:\n- Como alocar o professor na turma\n- Como anexar a lista de alunos (Etapa 7)\n- Como preencher os dados de transporte (Etapa 6)\n- Como o professor lança o diário de classe`;
   };
 
   // Helper to format text with markdown-like bolding
